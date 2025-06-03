@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Run Rally Hub - Data Seeding Guide</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            line-height: 1.6;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+            color: #333;
+        }
+        h1 {
+            color: #0070f3;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+        }
+        h2 {
+            color: #0055b3;
+            margin-top: 30px;
+        }
+        h3 {
+            color: #004494;
+        }
+        code {
+            background-color: #f4f4f4;
+            padding: 2px 5px;
+            border-radius: 4px;
+            font-family: 'Courier New', Courier, monospace;
+        }
+        pre {
+            background-color: #f4f4f4;
+            padding: 10px;
+            border-radius: 4px;
+            overflow-x: auto;
+            font-family: 'Courier New', Courier, monospace;
+        }
+        .step {
+            margin-bottom: 30px;
+            padding: 15px;
+            border-left: 4px solid #0070f3;
+            background-color: #f8f9fa;
+        }
+        .note {
+            padding: 10px;
+            background-color: #fff9db;
+            border-left: 4px solid #ffd43b;
+            margin: 15px 0;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 20px 0;
+        }
+        table, th, td {
+            border: 1px solid #ddd;
+        }
+        th, td {
+            padding: 12px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+    </style>
+</head>
+<body>
+    <h1>Run Rally Hub - Data Seeding Guide</h1>
+    
+    <p>This guide will help you populate your Supabase database with realistic test data for the Run Rally Hub application.</p>
+    
+    <div class="note">
+        <strong>Note:</strong> Make sure you are logged into your Supabase account with access to the project with ID: <code>lkumpuiyepjtztdwtcwg</code>
+    </div>
+    
+    <h2>Accessing Your Supabase Project</h2>
+    
+    <div class="step">
+        <h3>Step 1: Log into Supabase</h3>
+        <ol>
+            <li>Go to <a href="https://supabase.com/dashboard" target="_blank">https://supabase.com/dashboard</a></li>
+            <li>Log in with your credentials</li>
+            <li>Select the project with ID: <code>lkumpuiyepjtztdwtcwg</code></li>
+        </ol>
+    </div>
+    
+    <div class="step">
+        <h3>Step 2: Open the SQL Editor</h3>
+        <ol>
+            <li>In the left sidebar, click on <strong>SQL Editor</strong></li>
+            <li>Click on <strong>+ New Query</strong> to create a new SQL script</li>
+        </ol>
+    </div>
+    
+    <h2>Seeding the Database</h2>
+    
+    <div class="step">
+        <h3>Step 3: Copy and Paste the SQL Script</h3>
+        <p>Copy the following SQL script and paste it into the SQL Editor:</p>
+        
+        <pre>-- First, let's start with admin_users
+INSERT INTO public.admin_users (username, password_hash)
+VALUES 
+('admin', '$2a$10$hACwQ5/HQI6FhbIIK5C5IOocXDsjOYuokuCJUgzouIm7QFn1R5HEa'); -- password: admin123
+
+-- Clear existing data (optional - uncomment if you want to clear existing data)
+-- TRUNCATE TABLE public.departments, public.ministries, public.clusters, public.categories, public.registrations CASCADE;
+
+-- Insert departments
+INSERT INTO public.departments (name, description) 
+VALUES
+('Worship', 'Handles all worship and music ministries'),
+('Outreach', 'Focuses on community outreach and evangelism'),
+('Family Life', 'Support for families and relationship building'),
+('Next Gen', 'Youth and children ministries'),
+('Operations', 'Church operations and facilities management');
+
+-- Insert ministries
+INSERT INTO public.ministries (name, department_id)
+VALUES
+('Worship Team', (SELECT id FROM public.departments WHERE name = 'Worship')),
+('Sound & Media', (SELECT id FROM public.departments WHERE name = 'Worship')),
+('Community Service', (SELECT id FROM public.departments WHERE name = 'Outreach')),
+('Evangelism', (SELECT id FROM public.departments WHERE name = 'Outreach')),
+('Marriage Ministry', (SELECT id FROM public.departments WHERE name = 'Family Life')),
+('Parenting Support', (SELECT id FROM public.departments WHERE name = 'Family Life')),
+('Youth Ministry', (SELECT id FROM public.departments WHERE name = 'Next Gen')),
+('Children''s Church', (SELECT id FROM public.departments WHERE name = 'Next Gen')),
+('Facilities', (SELECT id FROM public.departments WHERE name = 'Operations')),
+('Events', (SELECT id FROM public.departments WHERE name = 'Operations'));
+
+-- Insert clusters
+INSERT INTO public.clusters (name, ministry_id)
+VALUES
+('Vocalists', (SELECT id FROM public.ministries WHERE name = 'Worship Team')),
+('Instrumentalists', (SELECT id FROM public.ministries WHERE name = 'Worship Team')),
+('Audio Team', (SELECT id FROM public.ministries WHERE name = 'Sound & Media')),
+('Video Team', (SELECT id FROM public.ministries WHERE name = 'Sound & Media')),
+('Food Bank', (SELECT id FROM public.ministries WHERE name = 'Community Service')),
+('Homeless Outreach', (SELECT id FROM public.ministries WHERE name = 'Community Service')),
+('Street Evangelism', (SELECT id FROM public.ministries WHERE name = 'Evangelism')),
+('Online Ministry', (SELECT id FROM public.ministries WHERE name = 'Evangelism')),
+('Newlyweds', (SELECT id FROM public.ministries WHERE name = 'Marriage Ministry')),
+('Long-term Marriage', (SELECT id FROM public.ministries WHERE name = 'Marriage Ministry')),
+('New Parents', (SELECT id FROM public.ministries WHERE name = 'Parenting Support')),
+('Teen Parents', (SELECT id FROM public.ministries WHERE name = 'Parenting Support')),
+('Middle School', (SELECT id FROM public.ministries WHERE name = 'Youth Ministry')),
+('High School', (SELECT id FROM public.ministries WHERE name = 'Youth Ministry')),
+('Preschool', (SELECT id FROM public.ministries WHERE name = 'Children''s Church')),
+('Elementary', (SELECT id FROM public.ministries WHERE name = 'Children''s Church')),
+('Building Maintenance', (SELECT id FROM public.ministries WHERE name = 'Facilities')),
+('Grounds', (SELECT id FROM public.ministries WHERE name = 'Facilities')),
+('Conference Planning', (SELECT id FROM public.ministries WHERE name = 'Events')),
+('Sunday Service', (SELECT id FROM public.ministries WHERE name = 'Events'));
+
+-- Insert categories
+INSERT INTO public.categories (name, price, inclusions)
+VALUES
+('3K', 1500, ARRAY['Race bib', 'Finisher medal', 'Water bottle']),
+('6K', 2500, ARRAY['Race bib', 'Finisher medal', 'Water bottle', 'T-shirt']),
+('10K', 3500, ARRAY['Race bib', 'Finisher medal', 'Water bottle', 'T-shirt', 'Cap']);
+
+-- Insert sample registrations
+INSERT INTO public.registrations (
+  first_name, 
+  last_name, 
+  email, 
+  phone, 
+  age, 
+  gender,
+  category,
+  price,
+  is_church_attendee,
+  department,
+  ministry,
+  cluster,
+  emergency_contact,
+  emergency_phone,
+  medical_conditions,
+  registration_id,
+  status,
+  created_at
+)
+VALUES
+-- Confirmed registrations
+('John', 'Smith', 'john.smith@example.com', '+2547123456789', 35, 'Male', '10K', 3500, true, 'Worship', 'Worship Team', 'Vocalists', 'Mary Smith', '+2547123456780', 'None', 'REG-001-2025', 'confirmed', NOW() - INTERVAL '10 days'),
+('Sarah', 'Johnson', 'sarah.johnson@example.com', '+2547234567890', 28, 'Female', '6K', 2500, true, 'Next Gen', 'Youth Ministry', 'High School', 'Mike Johnson', '+2547234567891', 'Asthma', 'REG-002-2025', 'confirmed', NOW() - INTERVAL '9 days'),
+('Michael', 'Williams', 'michael.williams@example.com', '+2547345678901', 42, 'Male', '3K', 1500, false, NULL, NULL, NULL, 'Jane Williams', '+2547345678902', 'None', 'REG-003-2025', 'confirmed', NOW() - INTERVAL '8 days'),
+('Emily', 'Brown', 'emily.brown@example.com', '+2547456789012', 31, 'Female', '10K', 3500, true, 'Outreach', 'Evangelism', 'Street Evangelism', 'David Brown', '+2547456789013', 'None', 'REG-004-2025', 'confirmed', NOW() - INTERVAL '7 days'),
+('David', 'Jones', 'david.jones@example.com', '+2547567890123', 29, 'Male', '6K', 2500, true, 'Operations', 'Facilities', 'Building Maintenance', 'Susan Jones', '+2547567890124', 'Knee injury', 'REG-005-2025', 'confirmed', NOW() - INTERVAL '7 days'),
+
+-- Pending registrations
+('Jennifer', 'Davis', 'jennifer.davis@example.com', '+2547678901234', 25, 'Female', '3K', 1500, true, 'Family Life', 'Marriage Ministry', 'Newlyweds', 'Robert Davis', '+2547678901235', 'None', 'REG-006-2025', 'pending', NOW() - INTERVAL '6 days'),
+('Robert', 'Miller', 'robert.miller@example.com', '+2547789012345', 38, 'Male', '10K', 3500, false, NULL, NULL, NULL, 'Nancy Miller', '+2547789012346', 'Diabetes', 'REG-007-2025', 'pending', NOW() - INTERVAL '5 days'),
+('Jessica', 'Wilson', 'jessica.wilson@example.com', '+2547890123456', 27, 'Female', '6K', 2500, true, 'Worship', 'Sound & Media', 'Audio Team', 'Andrew Wilson', '+2547890123457', 'None', 'REG-008-2025', 'pending', NOW() - INTERVAL '4 days'),
+('James', 'Moore', 'james.moore@example.com', '+2547901234567', 33, 'Male', '3K', 1500, true, 'Next Gen', 'Children''s Church', 'Elementary', 'Patricia Moore', '+2547901234568', 'None', 'REG-009-2025', 'pending', NOW() - INTERVAL '3 days'),
+('Patricia', 'Taylor', 'patricia.taylor@example.com', '+2547012345678', 29, 'Female', '10K', 3500, true, 'Operations', 'Events', 'Conference Planning', 'Thomas Taylor', '+2547012345679', 'Allergies', 'REG-010-2025', 'pending', NOW() - INTERVAL '2 days'),
+
+-- Cancelled registrations
+('Thomas', 'Anderson', 'thomas.anderson@example.com', '+2547112345678', 45, 'Male', '6K', 2500, false, NULL, NULL, NULL, 'Linda Anderson', '+2547112345679', 'High blood pressure', 'REG-011-2025', 'cancelled', NOW() - INTERVAL '9 days'),
+('Linda', 'White', 'linda.white@example.com', '+2547122345678', 39, 'Female', '3K', 1500, true, 'Outreach', 'Community Service', 'Food Bank', 'George White', '+2547122345679', 'None', 'REG-012-2025', 'cancelled', NOW() - INTERVAL '7 days'),
+
+-- More confirmed registrations (newer)
+('George', 'Martin', 'george.martin@example.com', '+2547132345678', 37, 'Male', '10K', 3500, true, 'Family Life', 'Parenting Support', 'New Parents', 'Susan Martin', '+2547132345679', 'None', 'REG-013-2025', 'confirmed', NOW() - INTERVAL '2 days'),
+('Susan', 'Clark', 'susan.clark@example.com', '+2547142345678', 30, 'Female', '6K', 2500, true, 'Worship', 'Worship Team', 'Instrumentalists', 'Daniel Clark', '+2547142345679', 'None', 'REG-014-2025', 'confirmed', NOW() - INTERVAL '1 day'),
+('Daniel', 'Lewis', 'daniel.lewis@example.com', '+2547152345678', 28, 'Male', '3K', 1500, false, NULL, NULL, NULL, 'Karen Lewis', '+2547152345679', 'Asthma', 'REG-015-2025', 'confirmed', NOW() - INTERVAL '1 day'),
+('Karen', 'Walker', 'karen.walker@example.com', '+2547162345678', 34, 'Female', '10K', 3500, true, 'Operations', 'Events', 'Sunday Service', 'Edward Walker', '+2547162345679', 'None', 'REG-016-2025', 'confirmed', NOW() - INTERVAL '12 hours'),
+('Edward', 'Hall', 'edward.hall@example.com', '+2547172345678', 41, 'Male', '6K', 2500, true, 'Next Gen', 'Youth Ministry', 'Middle School', 'Nancy Hall', '+2547172345679', 'None', 'REG-017-2025', 'confirmed', NOW() - INTERVAL '10 hours'),
+('Nancy', 'Young', 'nancy.young@example.com', '+2547182345678', 32, 'Female', '3K', 1500, true, 'Outreach', 'Evangelism', 'Online Ministry', 'Peter Young', '+2547182345679', 'None', 'REG-018-2025', 'confirmed', NOW() - INTERVAL '8 hours'),
+('Peter', 'Wright', 'peter.wright@example.com', '+2547192345678', 36, 'Male', '10K', 3500, false, NULL, NULL, NULL, 'Dorothy Wright', '+2547192345679', 'High blood pressure', 'REG-019-2025', 'confirmed', NOW() - INTERVAL '6 hours'),
+('Dorothy', 'Lopez', 'dorothy.lopez@example.com', '+2547202345678', 27, 'Female', '6K', 2500, true, 'Family Life', 'Marriage Ministry', 'Long-term Marriage', 'Scott Lopez', '+2547202345679', 'None', 'REG-020-2025', 'confirmed', NOW() - INTERVAL '4 hours');</pre>
+    </div>
+    
+    <div class="step">
+        <h3>Step 4: Run the SQL Script</h3>
+        <ol>
+            <li>Click the <strong>Run</strong> button to execute the script</li>
+            <li>You should see a success message if the script executed correctly</li>
+        </ol>
+        
+        <div class="note">
+            <strong>Important:</strong> If you already have data in your tables and want to keep it, make sure the line that starts with <code>-- TRUNCATE TABLE</code> remains commented out (with the <code>--</code> at the beginning). If you want to clear all existing data first, uncomment that line by removing the <code>--</code>.
+        </div>
+    </div>
+    
+    <h2>Verifying the Data</h2>
+    
+    <div class="step">
+        <h3>Step 5: Check the Database Tables</h3>
+        <ol>
+            <li>In the left sidebar, click on <strong>Table Editor</strong></li>
+            <li>Click on each of these tables to confirm the data was inserted:
+                <ul>
+                    <li>admin_users</li>
+                    <li>departments</li>
+                    <li>ministries</li>
+                    <li>clusters</li>
+                    <li>categories</li>
+                    <li>registrations</li>
+                </ul>
+            </li>
+        </ol>
+    </div>
+    
+    <h2>Data Overview</h2>
+    
+    <h3>Admin User</h3>
+    <table>
+        <tr>
+            <th>Username</th>
+            <th>Password</th>
+        </tr>
+        <tr>
+            <td>admin</td>
+            <td>admin123</td>
+        </tr>
+    </table>
+    
+    <h3>Race Categories</h3>
+    <table>
+        <tr>
+            <th>Name</th>
+            <th>Price (KES)</th>
+            <th>Inclusions</th>
+        </tr>
+        <tr>
+            <td>3K</td>
+            <td>1,500</td>
+            <td>Race bib, Finisher medal, Water bottle</td>
+        </tr>
+        <tr>
+            <td>6K</td>
+            <td>2,500</td>
+            <td>Race bib, Finisher medal, Water bottle, T-shirt</td>
+        </tr>
+        <tr>
+            <td>10K</td>
+            <td>3,500</td>
+            <td>Race bib, Finisher medal, Water bottle, T-shirt, Cap</td>
+        </tr>
+    </table>
+    
+    <h3>Registration Statistics</h3>
+    <table>
+        <tr>
+            <th>Status</th>
+            <th>Count</th>
+        </tr>
+        <tr>
+            <td>Confirmed</td>
+            <td>14</td>
+        </tr>
+        <tr>
+            <td>Pending</td>
+            <td>5</td>
+        </tr>
+        <tr>
+            <td>Cancelled</td>
+            <td>2</td>
+        </tr>
+    </table>
+    
+    <h2>Running the Application</h2>
+    
+    <div class="step">
+        <h3>Step 6: Start the Application</h3>
+        <ol>
+            <li>Return to your terminal</li>
+            <li>Run the application with:
+                <pre>npm run dev</pre>
+            </li>
+            <li>The application should now show the real data you've added</li>
+        </ol>
+    </div>
+    
+    <div class="note">
+        <strong>Note:</strong> The admin user credentials are:
+        <ul>
+            <li><strong>Username:</strong> admin</li>
+            <li><strong>Password:</strong> admin123</li>
+        </ul>
+    </div>
+
+</body>
+</html>
