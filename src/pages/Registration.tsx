@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,6 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import { QRCodeGenerator } from "@/components/QRCodeGenerator";
 import { ShirtSizeChart } from "@/components/ShirtSizeChart";
 import { PaymentMethod } from "@/components/PaymentMethod";
+import { ErrorSummary } from "@/components/ErrorSummary";
 import { supabase } from "@/integrations/supabase/client";
 import { useCategories } from "@/hooks/useCategories";
 import { useDepartments } from "@/hooks/useDepartments";
@@ -19,8 +20,85 @@ import { useClusters } from "@/hooks/useClusters";
 import { formatCurrency } from "@/lib/format-utils";
 import emailjs from '@emailjs/browser';
 
+// Input validation helpers
+const isValidEmail = (email: string): boolean => {
+  const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return regex.test(email);
+};
+
+const isValidPhoneNumber = (phone: string): boolean => {
+  // Allow Philippine phone formats: +639XXXXXXXXX, 09XXXXXXXXX, 9XXXXXXXXX
+  // Also allow formats with spaces, dashes: +63 9XX XXX XXXX, 0919-123-4567
+  const cleanedNumber = phone.replace(/[\s-]/g, '');
+  const regex = /^(?:\+?63|0)?9\d{9}$/;
+  return regex.test(cleanedNumber);
+};
+
+const isValidName = (name: string): boolean => {
+  // Check if name contains at least 2 characters, allows letters, spaces, hyphens, and apostrophes
+  return name.trim().length >= 2 && /^[a-zA-ZñÑ\s'-]+$/.test(name.trim());
+};
+
+// Format phone number as user types for better UX
+const formatPhoneNumber = (phone: string): string => {
+  // Clean the input - remove all non-digits
+  const cleaned = phone.replace(/\D/g, '');
+  
+  // Handle different phone number formats
+  if (cleaned.startsWith('63') && cleaned.length > 2) {
+    // Format as +63 XXX XXX XXXX
+    const countryCode = '+63';
+    let remaining = cleaned.substring(2);
+    
+    if (remaining.length > 3) {
+      remaining = remaining.substring(0, 3) + ' ' + remaining.substring(3);
+    }
+    
+    if (remaining.length > 7) {
+      remaining = remaining.substring(0, 7) + ' ' + remaining.substring(7);
+    }
+    
+    return `${countryCode} ${remaining}`;
+  } else if (cleaned.startsWith('0') && cleaned.length > 1) {
+    // Format as 0915 123 4567
+    let remaining = cleaned.substring(1);
+    
+    if (remaining.length > 3) {
+      remaining = remaining.substring(0, 3) + ' ' + remaining.substring(3);
+    }
+    
+    if (remaining.length > 7) {
+      remaining = remaining.substring(0, 7) + ' ' + remaining.substring(7);
+    }
+    
+    return `0${remaining}`;
+  }
+  
+  // Default case - just return the cleaned input
+  return cleaned;
+};
+
+
+interface ValidationErrors {
+  firstName?: string;
+  lastName?: string;
+  email?: string;
+  phone?: string;
+  emergencyContact?: string;
+  emergencyPhone?: string;
+}
+
 // Initialize EmailJS with your public key
 emailjs.init("vc8LzDacZcreqI6fN"); // Replace with your actual EmailJS public key
+
+interface ValidationErrors {
+  firstName?: string;
+  lastName?: string;
+  email?: string;
+  phone?: string;
+  emergencyContact?: string;
+  emergencyPhone?: string;
+}
 
 const Registration = () => {
   const { toast } = useToast();
@@ -45,11 +123,162 @@ const Registration = () => {
     medicalConditions: "",
     shirtSize: "",
   });
+  const [errors, setErrors] = useState<ValidationErrors>({});
   const [showQR, setShowQR] = useState(false);
   const [registrationId, setRegistrationId] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [paymentProof, setPaymentProof] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [touchedFields, setTouchedFields] = useState<Record<string, boolean>>({});
+  const [showErrorSummary, setShowErrorSummary] = useState(false);
+
+  // Debounced validation for fields that are being actively typed in
+  useEffect(() => {
+    // Only validate fields that have been touched (interacted with)
+    const fieldsToValidate = Object.keys(touchedFields).filter(field => touchedFields[field]);
+    
+    if (fieldsToValidate.length === 0) return;
+    
+    const debounceTimeout = setTimeout(() => {
+      const newErrors: ValidationErrors = { ...errors };
+      
+      fieldsToValidate.forEach(field => {
+        if (['firstName', 'lastName', 'email', 'phone', 'emergencyContact', 'emergencyPhone'].includes(field)) {
+          newErrors[field as keyof ValidationErrors] = validateField(
+            field, 
+            formData[field as keyof typeof formData] as string
+          );
+        }
+      });
+      
+      setErrors(newErrors);
+    }, 400); // 400ms debounce time
+    
+    return () => clearTimeout(debounceTimeout);
+  }, [formData, touchedFields]);
+
+  // Function to check if there are any form errors
+  const hasErrors = (): boolean => {
+    return Object.values(errors).some(error => error !== undefined);
+  };
+
+  // Get a summary of all form errors
+  const getErrorSummary = (): string[] => {
+    const errorMessages: string[] = [];
+    
+    if (errors.firstName) errorMessages.push(`First Name: ${errors.firstName}`);
+    if (errors.lastName) errorMessages.push(`Last Name: ${errors.lastName}`);
+    if (errors.email) errorMessages.push(`Email: ${errors.email}`);
+    if (errors.phone) errorMessages.push(`Phone: ${errors.phone}`);
+    if (errors.emergencyContact) errorMessages.push(`Emergency Contact: ${errors.emergencyContact}`);
+    if (errors.emergencyPhone) errorMessages.push(`Emergency Phone: ${errors.emergencyPhone}`);
+    
+    // Check for other required fields
+    if (!formData.category) errorMessages.push("Race Category is required");
+    if (!formData.shirtSize) errorMessages.push("Shirt Size is required");
+    if (formData.isChurchAttendee && !formData.department) errorMessages.push("Department is required");
+    if (formData.isChurchAttendee && !formData.ministry) errorMessages.push("Ministry is required");
+    // Cluster is now optional, so we don't check for it
+    
+    return errorMessages;
+  };
+
+  // Function to navigate to a field with an error
+  const navigateToErrorField = (index: number): void => {
+    const errorMessages = getErrorSummary();
+    const errorMessage = errorMessages[index];
+    
+    if (!errorMessage) return;
+    
+    // Determine which field to focus based on the error message
+    let fieldId: string | null = null;
+    
+    if (errorMessage.startsWith('First Name:')) fieldId = 'firstName';
+    else if (errorMessage.startsWith('Last Name:')) fieldId = 'lastName';
+    else if (errorMessage.startsWith('Email:')) fieldId = 'email';
+    else if (errorMessage.startsWith('Phone:')) fieldId = 'phone';
+    else if (errorMessage.startsWith('Emergency Contact:')) fieldId = 'emergencyContact';
+    else if (errorMessage.startsWith('Emergency Phone:')) fieldId = 'emergencyPhone';
+    else if (errorMessage.includes('Category')) fieldId = formData.category || null;
+    else if (errorMessage.includes('Shirt Size')) fieldId = 'shirtSize';
+    else if (errorMessage.includes('Department')) fieldId = 'department';
+    else if (errorMessage.includes('Ministry')) fieldId = 'ministry';
+    // Cluster navigation removed since it's now optional
+    
+    if (fieldId) {
+      const element = document.getElementById(fieldId);
+      if (element) {
+        element.focus();
+        element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }
+  };
+
+  // Validate individual field
+  const validateField = (field: string, value: string): string | undefined => {
+    switch (field) {
+      case "firstName":
+      case "lastName":
+        if (!value.trim()) return "This field is required";
+        if (value.trim().length < 2) return "Name must be at least 2 characters";
+        if (!isValidName(value)) return "Please use only letters, spaces, hyphens, and apostrophes";
+        break;
+      case "email":
+        if (!value.trim()) return "Email is required";
+        if (!isValidEmail(value)) return "Please enter a valid email address (example@domain.com)";
+        break;
+      case "phone":
+        if (value.trim() && !isValidPhoneNumber(value)) 
+          return "Please enter a valid Philippine phone number (e.g., 09XXXXXXXXX)";
+        break;
+      case "emergencyContact":
+        if (!value.trim()) return "Emergency contact name is required";
+        if (value.trim().length < 2) return "Name must be at least 2 characters";
+        if (!isValidName(value)) return "Please use only letters, spaces, hyphens, and apostrophes";
+        break;
+      case "emergencyPhone":
+        if (!value.trim()) return "Emergency contact phone is required";
+        if (!isValidPhoneNumber(value)) 
+          return "Please enter a valid Philippine phone number (e.g., 09XXXXXXXXX)";
+        break;
+    }
+    return undefined;
+  };
+
+  // Validate all required fields
+  const validateForm = (): boolean => {
+    const newErrors: ValidationErrors = {};
+
+    // Validate contact info fields with specific validation rules
+    newErrors.firstName = validateField("firstName", formData.firstName);
+    newErrors.lastName = validateField("lastName", formData.lastName);
+    newErrors.email = validateField("email", formData.email);
+    
+    // Phone is optional but validate format if provided
+    if (formData.phone) {
+      newErrors.phone = validateField("phone", formData.phone);
+    }
+    
+    // Emergency contact info is required
+    newErrors.emergencyContact = validateField("emergencyContact", formData.emergencyContact);
+    newErrors.emergencyPhone = validateField("emergencyPhone", formData.emergencyPhone);
+    
+    // Update error state
+    setErrors(newErrors);      // Check other required fields (not in errors state but required for form completion)
+    const otherRequiredFieldsValid = (
+      !!formData.category &&
+      !!formData.shirtSize &&
+      (!formData.isChurchAttendee || (
+        !!formData.department &&
+        !!formData.ministry
+        // NOTE: Cluster is now optional and not included in required field validation
+      ))
+    );
+    
+    // Form is valid if there are no error messages and other required fields are filled
+    return !Object.values(newErrors).some(error => error !== undefined) && otherRequiredFieldsValid;
+  };
+
   const uploadPaymentProof = async (file: File, registrationId: string): Promise<string | null> => {
     try {
       // Setup storage bucket first
@@ -122,11 +351,41 @@ const Registration = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // First validate all fields
+    if (!validateForm()) {
+      // Show the error summary
+      setShowErrorSummary(true);
+      
+      // Find the first field with an error and scroll it into view
+      const fieldWithError = Object.keys(errors).find(field => errors[field as keyof ValidationErrors]);
+      
+      if (fieldWithError) {
+        const element = document.getElementById(fieldWithError);
+        if (element) {
+          element.focus();
+          element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }
+      
+      // Show a toast for validation errors
+      toast({
+        title: "Validation Error",
+        description: "Please correct the highlighted fields before submitting.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    // Hide error summary if form is valid
+    setShowErrorSummary(false);
+    
     setIsSubmitting(true);
     setIsUploading(true);
 
     try {
-      if (!formData.firstName || !formData.lastName || !formData.email || !formData.category || !formData.shirtSize) {
+      // Remove basic missing check as validateForm already does this more thoroughly
+      if (!formData.category || !formData.shirtSize) {
         toast({
           title: "Missing Information",
           description: "Please fill in all required fields.",
@@ -135,10 +394,10 @@ const Registration = () => {
         return;
       }
 
-      if (formData.isChurchAttendee && (!formData.department || !formData.ministry || !formData.cluster)) {
+      if (formData.isChurchAttendee && (!formData.department || !formData.ministry)) {
         toast({
           title: "Church Information Required",
-          description: "Please select your department, ministry, and cluster.",
+          description: "Please select your department and ministry.",
           variant: "destructive",
         });
         return;
@@ -148,6 +407,17 @@ const Registration = () => {
         toast({
           title: "Payment Proof Required",
           description: "Please upload your payment proof screenshot.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Validate form fields
+      const isValid = validateForm();
+      if (!isValid) {
+        toast({
+          title: "Invalid Input",
+          description: "Please correct the highlighted errors and try again.",
           variant: "destructive",
         });
         return;
@@ -194,10 +464,12 @@ const Registration = () => {
         is_church_attendee: formData.isChurchAttendee,
         department: formData.isChurchAttendee ? selectedDepartment?.name : null,
         ministry: formData.isChurchAttendee ? selectedMinistry?.name : null,
-        cluster: formData.isChurchAttendee ? selectedCluster?.name : null,
+        // Cluster is optional
+        cluster: formData.isChurchAttendee && formData.cluster ? selectedCluster?.name : null,
         department_id: formData.isChurchAttendee ? formData.department : null,
         ministry_id: formData.isChurchAttendee ? formData.ministry : null, 
-        cluster_id: formData.isChurchAttendee ? formData.cluster : null,
+        // Cluster ID is optional
+        cluster_id: formData.isChurchAttendee && formData.cluster ? formData.cluster : null,
         emergency_contact: formData.emergencyContact || null,
         emergency_phone: formData.emergencyPhone || null,
         medical_conditions: formData.medicalConditions || null,
@@ -260,6 +532,38 @@ const Registration = () => {
     }
   };
 
+  // Function to check form without submitting
+  const checkForm = () => {
+    // Validate all fields
+    validateForm();
+    
+    // Show the error summary regardless of validation result
+    setShowErrorSummary(true);
+    
+    // If there are no errors, show success message
+    if (!hasErrors() && !!formData.category && !!formData.shirtSize) {
+      toast({
+        title: "Form Looks Good!",
+        description: "All required fields are properly filled out. You can submit the form.",
+        variant: "default", // Using default variant for success
+      });
+    } else {
+      // Show toast with validation error count
+      const errorCount = getErrorSummary().length;
+      toast({
+        title: `${errorCount} ${errorCount === 1 ? 'Error' : 'Errors'} Found`,
+        description: "Please check and correct the highlighted fields.",
+        variant: "destructive",
+      });
+      
+      // Scroll to error summary
+      const errorSummaryElement = document.getElementById("error-summary-title");
+      if (errorSummaryElement) {
+        errorSummaryElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }
+  };
+
   const handleInputChange = (field: string, value: string | boolean) => {
     setFormData(prev => ({
       ...prev,
@@ -268,6 +572,46 @@ const Registration = () => {
       ...(field === "department" && { ministry: "", cluster: "" }),
       ...(field === "ministry" && { cluster: "" }),
     }));
+
+    // Mark this field as touched when user interacts with it
+    setTouchedFields(prev => ({
+      ...prev,
+      [field]: true
+    }));
+
+    // Clear error for this field when it's changed
+    if (typeof value === 'string' && errors[field as keyof ValidationErrors]) {
+      // For critical fields (email, phone, names) we'll let the debounced validation handle it
+      // For other fields, just clear the error
+      if (!['firstName', 'lastName', 'email', 'phone', 'emergencyContact', 'emergencyPhone'].includes(field)) {
+        setErrors(prev => ({ ...prev, [field]: undefined }));
+      }
+    }
+  };
+
+  // Clear errors on unmount
+  useEffect(() => {
+    return () => {
+      setErrors({});
+    };
+  }, []);
+
+  // Handle blur event to validate fields when users leave them
+  const handleBlur = (field: string, value: string) => {
+    // Mark this field as touched when user leaves it
+    setTouchedFields(prev => ({
+      ...prev,
+      [field]: true
+    }));
+    
+    // Only validate fields that have validation rules
+    if (['firstName', 'lastName', 'email', 'phone', 'emergencyContact', 'emergencyPhone'].includes(field)) {
+      const fieldError = validateField(field, value);
+      setErrors(prev => ({
+        ...prev,
+        [field]: fieldError
+      }));
+    }
   };
 
   const getPrice = (categoryName: string) => {
@@ -330,51 +674,133 @@ const Registration = () => {
             </CardHeader>
             <CardContent className="pt-4 sm:pt-6 px-3 sm:px-6">
               <form onSubmit={handleSubmit} className="space-y-5 sm:space-y-6">
+                <div className="text-sm text-gray-600 border-l-4 border-blue-400 pl-3 py-1 bg-blue-50">
+                  <p>Fields marked with <span className="text-red-500">*</span> are required</p>
+                </div>
+                
+                {/* Error Summary */}
+                {showErrorSummary && (
+                  <ErrorSummary 
+                    errors={getErrorSummary()} 
+                    title="Please fix the following errors:"
+                    onErrorClick={navigateToErrorField}
+                  />
+                )}
+                
                 {/* Personal Information */}
                 <div className="space-y-3 sm:space-y-4">
                   <h3 className="text-base sm:text-lg font-semibold">Personal Information</h3>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                     <div>
-                      <Label htmlFor="firstName" className="text-sm sm:text-base">First Name *</Label>
+                      <Label htmlFor="firstName" className="text-sm sm:text-base">
+                        First Name <span className="text-red-500">*</span>
+                      </Label>
                       <Input
                         id="firstName"
                         value={formData.firstName}
                         onChange={(e) => handleInputChange("firstName", e.target.value)}
+                        onBlur={(e) => handleBlur("firstName", e.target.value)}
                         required
-                        className="mt-1 sm:mt-2 h-9 sm:h-10 text-sm sm:text-base"
+                        aria-invalid={errors.firstName ? "true" : "false"}
+                        aria-describedby={errors.firstName ? "firstName-error" : undefined}
+                        className={`mt-1 sm:mt-2 h-9 sm:h-10 text-sm sm:text-base ${errors.firstName ? "border-red-500" : ""}`}
                       />
+                      {errors.firstName && (
+                        <p 
+                          id="firstName-error" 
+                          className="text-red-500 text-xs mt-1"
+                          role="alert"
+                        >
+                          {errors.firstName}
+                        </p>
+                      )}
                     </div>
                     <div>
-                      <Label htmlFor="lastName" className="text-sm sm:text-base">Last Name *</Label>
+                      <Label htmlFor="lastName" className="text-sm sm:text-base">
+                        Last Name <span className="text-red-500">*</span>
+                      </Label>
                       <Input
                         id="lastName"
                         value={formData.lastName}
                         onChange={(e) => handleInputChange("lastName", e.target.value)}
+                        onBlur={(e) => handleBlur("lastName", e.target.value)}
                         required
-                        className="mt-1 sm:mt-2 h-9 sm:h-10 text-sm sm:text-base"
+                        aria-invalid={errors.lastName ? "true" : "false"}
+                        aria-describedby={errors.lastName ? "lastName-error" : undefined}
+                        className={`mt-1 sm:mt-2 h-9 sm:h-10 text-sm sm:text-base ${errors.lastName ? "border-red-500" : ""}`}
                       />
+                      {errors.lastName && (
+                        <p 
+                          id="lastName-error" 
+                          className="text-red-500 text-xs mt-1"
+                          role="alert"
+                        >
+                          {errors.lastName}
+                        </p>
+                      )}
                     </div>
                   </div>
                   <div>
-                    <Label htmlFor="email" className="text-sm sm:text-base">Email Address *</Label>
+                    <Label htmlFor="email" className="text-sm sm:text-base">
+                      Email Address <span className="text-red-500">*</span>
+                    </Label>
                     <Input
                       id="email"
                       type="email"
                       value={formData.email}
-                      onChange={(e) => handleInputChange("email", e.target.value)}
-                      required
-                      className="mt-1 sm:mt-2 h-9 sm:h-10 text-sm sm:text-base"
+                        onChange={(e) => handleInputChange("email", e.target.value)}
+                        onBlur={(e) => handleBlur("email", e.target.value)}
+                        required
+                        placeholder="you@example.com"
+                        aria-invalid={errors.email ? "true" : "false"}
+                        aria-describedby={errors.email ? "email-error" : "email-hint"}
+                        className={`mt-1 sm:mt-2 h-9 sm:h-10 text-sm sm:text-base ${errors.email ? "border-red-500" : ""}`}
                     />
+                    {errors.email ? (
+                      <p 
+                        id="email-error" 
+                        className="text-red-500 text-xs mt-1"
+                        role="alert"
+                      >
+                        {errors.email}
+                      </p>
+                    ) : (
+                      <p id="email-hint" className="text-xs text-gray-500 mt-1">
+                        Your confirmation email will be sent to this address
+                      </p>
+                    )}
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                     <div>
-                      <Label htmlFor="phone" className="text-sm sm:text-base">Phone Number</Label>
+                      <Label htmlFor="phone" className="text-sm sm:text-base">
+                        Phone Number
+                      </Label>
                       <Input
                         id="phone"
                         value={formData.phone}
-                        onChange={(e) => handleInputChange("phone", e.target.value)}
-                        className="mt-1 sm:mt-2 h-9 sm:h-10 text-sm sm:text-base"
+                        onChange={(e) => {
+                          const formattedPhone = formatPhoneNumber(e.target.value);
+                          handleInputChange("phone", formattedPhone);
+                        }}
+                        onBlur={(e) => handleBlur("phone", e.target.value)}
+                        placeholder="e.g., 09151234567"
+                        aria-invalid={errors.phone ? "true" : "false"}
+                        aria-describedby={errors.phone ? "phone-error" : "phone-hint"}
+                        className={`mt-1 sm:mt-2 h-9 sm:h-10 text-sm sm:text-base ${errors.phone ? "border-red-500" : ""}`}
                       />
+                      {errors.phone ? (
+                        <p 
+                          id="phone-error" 
+                          className="text-red-500 text-xs mt-1"
+                          role="alert"
+                        >
+                          {errors.phone}
+                        </p>
+                      ) : (
+                        <p id="phone-hint" className="text-xs text-gray-500 mt-1">
+                          Format: 09XXXXXXXXX, +639XXXXXXXXX, or with spaces/dashes
+                        </p>
+                      )}
                     </div>
                     <div>
                       <Label htmlFor="age" className="text-sm sm:text-base">Age</Label>
@@ -407,7 +833,9 @@ const Registration = () => {
                   {/* Shirt Size */}
                   <div>
                     <div className="flex items-center justify-between">
-                      <Label htmlFor="shirtSize" className="text-sm sm:text-base">Shirt Size *</Label>
+                      <Label htmlFor="shirtSize" className="text-sm sm:text-base">
+                        Shirt Size <span className="text-red-500">*</span>
+                      </Label>
                       <ShirtSizeChart />
                     </div>
                     <Select 
@@ -415,7 +843,10 @@ const Registration = () => {
                       onValueChange={(value) => handleInputChange("shirtSize", value)}
                       required
                     >
-                      <SelectTrigger className="mt-1 sm:mt-2 h-9 sm:h-10 text-sm sm:text-base">
+                      <SelectTrigger 
+                        id="shirtSize"
+                        className={`mt-1 sm:mt-2 h-9 sm:h-10 text-sm sm:text-base ${!formData.shirtSize && showErrorSummary ? "border-red-500" : ""}`}
+                      >
                         <SelectValue placeholder="Select shirt size" />
                       </SelectTrigger>
                       <SelectContent>
@@ -432,6 +863,9 @@ const Registration = () => {
                         <SelectItem value="5XL">5XL (Width: 26" | Length: 34")</SelectItem>
                       </SelectContent>
                     </Select>
+                    {!formData.shirtSize && showErrorSummary && (
+                      <p className="text-red-500 text-xs mt-1">Please select a shirt size</p>
+                    )}
                     <div className="mt-1 sm:mt-2 text-xs text-gray-500">
                       You'll receive a finisher shirt in this size. Click "View Size Chart" for detailed measurements.
                     </div>
@@ -495,9 +929,18 @@ const Registration = () => {
                     <div className="space-y-3 sm:space-y-4 pl-4 sm:pl-6 border-l-2 border-blue-200">
                       <h3 className="text-base sm:text-lg font-semibold">Church Information</h3>
                       <div>
-                        <Label htmlFor="department" className="text-sm sm:text-base">Department *</Label>
-                        <Select value={formData.department} onValueChange={(value) => handleInputChange("department", value)}>
-                          <SelectTrigger className="mt-1 sm:mt-2 h-9 sm:h-10 text-sm sm:text-base">
+                        <Label htmlFor="department" className="text-sm sm:text-base">
+                          Department <span className="text-red-500">*</span>
+                        </Label>
+                        <Select 
+                          value={formData.department} 
+                          onValueChange={(value) => handleInputChange("department", value)}
+                          required={formData.isChurchAttendee}
+                        >
+                          <SelectTrigger 
+                            id="department"
+                            className={`mt-1 sm:mt-2 h-9 sm:h-10 text-sm sm:text-base ${formData.isChurchAttendee && !formData.department && showErrorSummary ? "border-red-500" : ""}`}
+                          >
                             <SelectValue placeholder="Select department" />
                           </SelectTrigger>
                           <SelectContent>
@@ -508,13 +951,25 @@ const Registration = () => {
                             ))}
                           </SelectContent>
                         </Select>
+                        {formData.isChurchAttendee && !formData.department && showErrorSummary && (
+                          <p className="text-red-500 text-xs mt-1">Department is required</p>
+                        )}
                       </div>
 
                       {formData.department && (
                         <div>
-                          <Label htmlFor="ministry" className="text-sm sm:text-base">Ministry *</Label>
-                          <Select value={formData.ministry} onValueChange={(value) => handleInputChange("ministry", value)}>
-                            <SelectTrigger className="mt-1 sm:mt-2 h-9 sm:h-10 text-sm sm:text-base">
+                          <Label htmlFor="ministry" className="text-sm sm:text-base">
+                            Ministry <span className="text-red-500">*</span>
+                          </Label>
+                          <Select 
+                            value={formData.ministry} 
+                            onValueChange={(value) => handleInputChange("ministry", value)}
+                            required={formData.isChurchAttendee && !!formData.department}
+                          >
+                            <SelectTrigger 
+                              id="ministry"
+                              className={`mt-1 sm:mt-2 h-9 sm:h-10 text-sm sm:text-base ${formData.isChurchAttendee && formData.department && !formData.ministry && showErrorSummary ? "border-red-500" : ""}`}
+                            >
                               <SelectValue placeholder="Select ministry" />
                             </SelectTrigger>
                             <SelectContent>
@@ -525,14 +980,25 @@ const Registration = () => {
                               ))}
                             </SelectContent>
                           </Select>
+                          {formData.isChurchAttendee && formData.department && !formData.ministry && showErrorSummary && (
+                            <p className="text-red-500 text-xs mt-1">Ministry is required</p>
+                          )}
                         </div>
                       )}
 
                       {formData.ministry && (
                         <div>
-                          <Label htmlFor="cluster" className="text-sm sm:text-base">Cluster *</Label>
-                          <Select value={formData.cluster} onValueChange={(value) => handleInputChange("cluster", value)}>
-                            <SelectTrigger className="mt-1 sm:mt-2 h-9 sm:h-10 text-sm sm:text-base">
+                          <Label htmlFor="cluster" className="text-sm sm:text-base">
+                            Cluster <span className="text-gray-400">(optional)</span>
+                          </Label>
+                          <Select 
+                            value={formData.cluster} 
+                            onValueChange={(value) => handleInputChange("cluster", value)}
+                          >
+                            <SelectTrigger 
+                              id="cluster"
+                              className="mt-1 sm:mt-2 h-9 sm:h-10 text-sm sm:text-base"
+                            >
                               <SelectValue placeholder="Select cluster" />
                             </SelectTrigger>
                             <SelectContent>
@@ -543,6 +1009,7 @@ const Registration = () => {
                               ))}
                             </SelectContent>
                           </Select>
+                          <p className="text-xs text-gray-500 mt-1">You can leave this empty if you don't belong to a specific cluster</p>
                         </div>
                       )}
                     </div>
@@ -554,22 +1021,61 @@ const Registration = () => {
                   <h3 className="text-base sm:text-lg font-semibold">Emergency Contact</h3>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                     <div>
-                      <Label htmlFor="emergencyContact" className="text-sm sm:text-base">Emergency Contact Name</Label>
+                      <Label htmlFor="emergencyContact" className="text-sm sm:text-base">
+                        Emergency Contact Name <span className="text-red-500">*</span>
+                      </Label>
                       <Input
                         id="emergencyContact"
                         value={formData.emergencyContact}
                         onChange={(e) => handleInputChange("emergencyContact", e.target.value)}
-                        className="mt-1 sm:mt-2 h-9 sm:h-10 text-sm sm:text-base"
+                        onBlur={(e) => handleBlur("emergencyContact", e.target.value)}
+                        required
+                        placeholder="Enter full name"
+                        aria-invalid={errors.emergencyContact ? "true" : "false"}
+                        aria-describedby={errors.emergencyContact ? "emergencyContact-error" : undefined}
+                        className={`mt-1 sm:mt-2 h-9 sm:h-10 text-sm sm:text-base ${errors.emergencyContact ? "border-red-500" : ""}`}
                       />
+                      {errors.emergencyContact && (
+                        <p 
+                          id="emergencyContact-error" 
+                          className="text-red-500 text-xs mt-1"
+                          role="alert"
+                        >
+                          {errors.emergencyContact}
+                        </p>
+                      )}
                     </div>
                     <div>
-                      <Label htmlFor="emergencyPhone" className="text-sm sm:text-base">Emergency Contact Phone</Label>
+                      <Label htmlFor="emergencyPhone" className="text-sm sm:text-base">
+                        Emergency Contact Phone <span className="text-red-500">*</span>
+                      </Label>
                       <Input
                         id="emergencyPhone"
                         value={formData.emergencyPhone}
-                        onChange={(e) => handleInputChange("emergencyPhone", e.target.value)}
-                        className="mt-1 sm:mt-2 h-9 sm:h-10 text-sm sm:text-base"
+                        onChange={(e) => {
+                          const formattedPhone = formatPhoneNumber(e.target.value);
+                          handleInputChange("emergencyPhone", formattedPhone);
+                        }}
+                        onBlur={(e) => handleBlur("emergencyPhone", e.target.value)}
+                        required
+                        placeholder="e.g., 09151234567"
+                        aria-invalid={errors.emergencyPhone ? "true" : "false"}
+                        aria-describedby={errors.emergencyPhone ? "emergencyPhone-error" : "emergencyPhone-hint"}
+                        className={`mt-1 sm:mt-2 h-9 sm:h-10 text-sm sm:text-base ${errors.emergencyPhone ? "border-red-500" : ""}`}
                       />
+                      {errors.emergencyPhone ? (
+                        <p 
+                          id="emergencyPhone-error" 
+                          className="text-red-500 text-xs mt-1"
+                          role="alert"
+                        >
+                          {errors.emergencyPhone}
+                        </p>
+                      ) : (
+                        <p id="emergencyPhone-hint" className="text-xs text-gray-500 mt-1">
+                          Must be a reachable number for emergencies
+                        </p>
+                      )}
                     </div>
                   </div>
                   <div>
@@ -662,18 +1168,29 @@ const Registration = () => {
                   </div>
                 </div>
 
-                <Button 
-                  type="submit" 
-                  className="w-full bg-gradient-to-r from-blue-600 via-red-500 to-yellow-500 hover:from-blue-700 hover:via-red-600 hover:to-yellow-600 text-white py-4 sm:py-6 text-lg sm:text-xl font-bold tracking-wide mt-4 sm:mt-6"
-                  disabled={isSubmitting || isUploading || !paymentProof}
-                >
-                  {isSubmitting || isUploading ? (
-                    <span className="flex items-center gap-2 justify-center">
-                      <span className="animate-spin h-4 w-4 sm:h-5 sm:w-5 border-t-2 border-white rounded-full"></span>
-                      {isUploading ? 'Uploading...' : 'Processing...'}
-                    </span>
-                  ) : 'Complete Registration'}
-                </Button>
+                <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mt-4 sm:mt-6">
+                  <Button 
+                    type="button" 
+                    variant="outline"
+                    className="sm:flex-1"
+                    onClick={checkForm}
+                  >
+                    Check Form
+                  </Button>
+                  
+                  <Button 
+                    type="submit" 
+                    className="flex-1 bg-gradient-to-r from-blue-600 via-red-500 to-yellow-500 hover:from-blue-700 hover:via-red-600 hover:to-yellow-600 text-white py-4 sm:py-6 text-lg sm:text-xl font-bold tracking-wide"
+                    disabled={isSubmitting || isUploading || !paymentProof}
+                  >
+                    {isSubmitting || isUploading ? (
+                      <span className="flex items-center gap-2 justify-center">
+                        <span className="animate-spin h-4 w-4 sm:h-5 sm:w-5 border-t-2 border-white rounded-full"></span>
+                        {isUploading ? 'Uploading...' : 'Processing...'}
+                      </span>
+                    ) : 'Complete Registration'}
+                  </Button>
+                </div>
               </form>
             </CardContent>
           </Card>

@@ -512,7 +512,7 @@ export const ReportsManagement = () => {
               </div>
               <div className="text-center">
                 <div className="text-2xl font-bold text-purple-600">
-                  {formatCurrency(filteredRegistrations.reduce((sum, r) => sum + r.fee, 0))}
+                  {formatCurrency(filteredRegistrations.filter(r => r.status.toLowerCase() === 'confirmed').reduce((sum, r) => sum + r.fee, 0))}
                 </div>
                 <div className="text-sm text-gray-600">Total Revenue</div>
               </div>
