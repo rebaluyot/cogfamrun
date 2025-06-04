@@ -1,11 +1,10 @@
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { formatCurrency, getCategoryColorClass, getStatusColorClass } from "@/lib/format-utils";
-import { useDepartments } from "@/hooks/useDepartments";
-import { useMinistries } from "@/hooks/useMinistries";
-import { useClusters } from "@/hooks/useClusters";
+import { Button } from "@/components/ui/button";
+import { X } from "lucide-react";
 
 interface Registration {
   id: number;
@@ -42,154 +41,167 @@ export const RegistrationDetails = ({ registration, open, onOpenChange }: Regist
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>Registration Details</DialogTitle>
-          <DialogDescription>
-            Complete registration information for {registration.first_name} {registration.last_name}
+      <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto p-3 md:p-4">
+        <DialogHeader className="pb-1">
+          <div className="flex justify-between items-center">
+            <DialogTitle className="text-base">Registration Details</DialogTitle>
+            <Button variant="ghost" size="icon" onClick={() => onOpenChange(false)}>
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
+          <DialogDescription className="text-xs">
+            Information for {registration.first_name} {registration.last_name}
           </DialogDescription>
         </DialogHeader>
 
-        <div className="grid gap-6">
-          {/* Registration ID and Status */}
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between mb-4">
-                <div>
-                  <h3 className="text-lg font-semibold">Registration ID</h3>
-                  <p className="text-2xl font-bold text-primary">{registration.registration_id}</p>
-                </div>
-                <Badge className={getStatusColorClass(registration.status)}>
-                  {registration.status}
-                </Badge>
-              </div>
-              <p className="text-sm text-muted-foreground">
-                Registered on {new Date(registration.created_at).toLocaleString()}
-              </p>
-            </CardContent>
-          </Card>
+        <Separator className="my-2" />
 
-          <div className="grid gap-6 md:grid-cols-2">
+        <div className="grid gap-3">
+          {/* Registration ID and Status */}
+          <div className="flex items-center justify-between py-1">
+            <div className="overflow-hidden">
+              <h3 className="text-xs font-medium text-muted-foreground">Registration ID</h3>
+              <p className="text-lg font-bold text-primary truncate">{registration.registration_id}</p>
+              <p className="text-xs text-muted-foreground">
+                {new Date(registration.created_at).toLocaleDateString('en-US', { 
+                  year: 'numeric',
+                  month: 'short',
+                  day: 'numeric'
+                })}
+              </p>
+            </div>
+            <Badge className={`${getStatusColorClass(registration.status)} text-sm px-2 py-0.5`}>
+              {registration.status.charAt(0).toUpperCase() + registration.status.slice(1)}
+            </Badge>
+          </div>
+
+          <Separator />
+
+          <div className="grid gap-3 sm:grid-cols-2">
             {/* Personal Information */}
-            <Card>
-              <CardContent className="pt-6">
-                <h3 className="text-lg font-semibold mb-4">Personal Information</h3>
-                <div className="space-y-2">
-                  <div>
-                    <span className="text-sm text-muted-foreground">Name:</span>
-                    <p className="font-medium">{registration.first_name} {registration.last_name}</p>
-                  </div>
-                  <div>
-                    <span className="text-sm text-muted-foreground">Email:</span>
-                    <p className="font-medium">{registration.email}</p>
-                  </div>
-                  {registration.phone && (
-                    <div>
-                      <span className="text-sm text-muted-foreground">Phone:</span>
-                      <p className="font-medium">{registration.phone}</p>
-                    </div>
-                  )}
-                  {registration.age && (
-                    <div>
-                      <span className="text-sm text-muted-foreground">Age:</span>
-                      <p className="font-medium">{registration.age}</p>
-                    </div>
-                  )}
-                  {registration.gender && (
-                    <div>
-                      <span className="text-sm text-muted-foreground">Gender:</span>
-                      <p className="font-medium">{registration.gender}</p>
-                    </div>
-                  )}
+            <div>
+              <h3 className="text-xs font-semibold mb-1">Personal Information</h3>
+              <dl className="space-y-1 text-sm">
+                <div className="flex gap-1">
+                  <dt className="text-muted-foreground w-16 flex-shrink-0">Name:</dt>
+                  <dd className="font-medium flex-1 min-w-0 truncate">{registration.first_name} {registration.last_name}</dd>
                 </div>
-              </CardContent>
-            </Card>
+                <div className="flex gap-1">
+                  <dt className="text-muted-foreground w-16 flex-shrink-0">Email:</dt>
+                  <dd className="font-medium flex-1 min-w-0 text-xs break-all line-clamp-2">{registration.email}</dd>
+                </div>
+                {registration.phone && (
+                  <div className="flex gap-1">
+                    <dt className="text-muted-foreground w-16 flex-shrink-0">Phone:</dt>
+                    <dd className="font-medium flex-1 min-w-0">{registration.phone}</dd>
+                  </div>
+                )}
+                {registration.age && (
+                  <div className="flex gap-1">
+                    <dt className="text-muted-foreground w-16 flex-shrink-0">Age:</dt>
+                    <dd className="font-medium flex-1 min-w-0">{registration.age}</dd>
+                  </div>
+                )}
+                {registration.gender && (
+                  <div className="flex gap-1">
+                    <dt className="text-muted-foreground w-16 flex-shrink-0">Gender:</dt>
+                    <dd className="font-medium flex-1 min-w-0">{registration.gender}</dd>
+                  </div>
+                )}
+              </dl>
+            </div>
 
             {/* Race Information */}
-            <Card>
-              <CardContent className="pt-6">
-                <h3 className="text-lg font-semibold mb-4">Race Information</h3>
-                <div className="space-y-2">
-                  <div>
-                    <span className="text-sm text-muted-foreground">Category:</span>
-                    <div className="mt-1">
-                      <Badge className={getCategoryColorClass(registration.category)}>
-                        {registration.category}
-                      </Badge>
-                    </div>
-                  </div>
-                  <div>
-                    <span className="text-sm text-muted-foreground">Registration Fee:</span>
-                    <p className="font-medium text-green-600">{formatCurrency(registration.price)}</p>
-                  </div>
-                  <div>
-                    <span className="text-sm text-muted-foreground">Shirt Size:</span>
-                    <p className="font-medium">{registration.shirt_size}</p>
-                  </div>
+            <div>
+              <h3 className="text-xs font-semibold mb-1">Race Information</h3>
+              <dl className="space-y-1 text-sm">
+                <div className="flex gap-1">
+                  <dt className="text-muted-foreground w-16 flex-shrink-0">Category:</dt>
+                  <dd className="flex-1 min-w-0">
+                    <Badge className={getCategoryColorClass(registration.category)}>
+                      {registration.category}
+                    </Badge>
+                  </dd>
                 </div>
-              </CardContent>
-            </Card>
+                <div className="flex gap-1">
+                  <dt className="text-muted-foreground w-16 flex-shrink-0">Fee:</dt>
+                  <dd className="font-medium text-green-600 flex-1 min-w-0">
+                    {formatCurrency(registration.price)}
+                  </dd>
+                </div>
+                <div className="flex gap-1">
+                  <dt className="text-muted-foreground w-16 flex-shrink-0">Shirt Size:</dt>
+                  <dd className="font-medium flex-1 min-w-0">{registration.shirt_size}</dd>
+                </div>
+              </dl>
+            </div>
           </div>
 
           {/* Church Information */}
           {registration.is_church_attendee && (
-            <Card>
-              <CardContent className="pt-6">
-                <h3 className="text-lg font-semibold mb-4">Church Information</h3>
-                <div className="space-y-2">
-                  <div>
-                    <span className="text-sm text-muted-foreground">Department:</span>
-                    <p className="font-medium">{registration.department}</p>
+            <>
+              <Separator />
+              <div>
+                <h3 className="text-xs font-semibold mb-1">Church Information</h3>
+                <dl className="text-sm space-y-1">
+                  <div className="flex gap-1">
+                    <dt className="text-muted-foreground w-20 flex-shrink-0">Department:</dt>
+                    <dd className="font-medium flex-1 min-w-0 truncate">{registration.department}</dd>
                   </div>
-                  <div>
-                    <span className="text-sm text-muted-foreground">Ministry:</span>
-                    <p className="font-medium">{registration.ministry}</p>
+                  <div className="flex gap-1">
+                    <dt className="text-muted-foreground w-20 flex-shrink-0">Ministry:</dt>
+                    <dd className="font-medium flex-1 min-w-0 truncate">{registration.ministry}</dd>
                   </div>
-                  <div>
-                    <span className="text-sm text-muted-foreground">Cluster:</span>
-                    <p className="font-medium">{registration.cluster}</p>
+                  <div className="flex gap-1">
+                    <dt className="text-muted-foreground w-20 flex-shrink-0">Cluster:</dt>
+                    <dd className="font-medium flex-1 min-w-0 truncate">{registration.cluster}</dd>
                   </div>
-                </div>
-              </CardContent>
-            </Card>
+                </dl>
+              </div>
+            </>
           )}
 
           {/* Emergency Contact */}
           {(registration.emergency_contact || registration.emergency_phone || registration.medical_conditions) && (
-            <Card>
-              <CardContent className="pt-6">
-                <h3 className="text-lg font-semibold mb-4">Emergency Information</h3>
-                <div className="space-y-2">
+            <>
+              <Separator />
+              <div>
+                <h3 className="text-xs font-semibold mb-1">Emergency Information</h3>
+                <dl className="space-y-1 text-sm">
                   {registration.emergency_contact && (
-                    <div>
-                      <span className="text-sm text-muted-foreground">Emergency Contact:</span>
-                      <p className="font-medium">{registration.emergency_contact}</p>
+                    <div className="flex gap-1">
+                      <dt className="text-muted-foreground w-16 flex-shrink-0">Contact:</dt>
+                      <dd className="font-medium flex-1 min-w-0 truncate">{registration.emergency_contact}</dd>
                     </div>
                   )}
                   {registration.emergency_phone && (
-                    <div>
-                      <span className="text-sm text-muted-foreground">Emergency Phone:</span>
-                      <p className="font-medium">{registration.emergency_phone}</p>
+                    <div className="flex gap-1">
+                      <dt className="text-muted-foreground w-16 flex-shrink-0">Phone:</dt>
+                      <dd className="font-medium flex-1 min-w-0">{registration.emergency_phone}</dd>
                     </div>
                   )}
                   {registration.medical_conditions && (
-                    <div>
-                      <span className="text-sm text-muted-foreground">Medical Conditions:</span>
-                      <p className="font-medium">{registration.medical_conditions}</p>
+                    <div className="flex gap-1">
+                      <dt className="text-muted-foreground w-16 flex-shrink-0">Medical:</dt>
+                      <dd className="font-medium flex-1 min-w-0 truncate">{registration.medical_conditions}</dd>
                     </div>
                   )}
-                </div>
-              </CardContent>
-            </Card>
-          )}          {/* Payment Proof */}
+                </dl>
+              </div>
+            </>
+          )}
+
+          {/* Payment Proof */}
           {registration.payment_proof_url && (
-            <Card>
-              <CardContent className="pt-6">
-                <h3 className="text-lg font-semibold mb-4">Payment Proof</h3>
-                <div className="aspect-[4/3] relative rounded-lg overflow-hidden border">                  <img 
+            <>
+              <Separator />
+              <div>
+                <h3 className="text-xs font-semibold mb-1">Payment Proof</h3>
+                <div className="aspect-[4/3] rounded-md overflow-hidden border bg-muted">
+                  <img 
                     src={registration.payment_proof_url} 
                     alt="Payment Proof"
-                    className="object-contain w-full h-full max-h-[500px]"
+                    className="object-contain w-full h-full"
                     onError={(e) => {
                       console.error('Error loading image:', e);
                       const img = e.target as HTMLImageElement;
@@ -199,11 +211,11 @@ export const RegistrationDetails = ({ registration, open, onOpenChange }: Regist
                     loading="lazy"
                   />
                 </div>
-                <p className="text-xs text-muted-foreground mt-2">
-                  Image URL: {registration.payment_proof_url}
+                <p className="text-[10px] text-muted-foreground mt-1 break-all line-clamp-1">
+                  {registration.payment_proof_url}
                 </p>
-              </CardContent>
-            </Card>
+              </div>
+            </>
           )}
         </div>
       </DialogContent>

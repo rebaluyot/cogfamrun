@@ -482,7 +482,7 @@ const Registration = () => {
                       checked={formData.isChurchAttendee}
                       onCheckedChange={(checked) => handleInputChange("isChurchAttendee", checked)}
                     />
-                    <Label htmlFor="churchAttendee">I am a church attendee</Label>
+                    <Label htmlFor="churchAttendee">I am a COG Dasma church attendee</Label>
                   </div>
 
                   {formData.isChurchAttendee && (

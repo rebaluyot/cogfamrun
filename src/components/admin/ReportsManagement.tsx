@@ -190,7 +190,7 @@ export const ReportsManagement = () => {
 
   // View registration details
   const handleViewDetails = (registration: any) => {
-    setSelectedRegistration(registration.original);
+    setSelectedRegistration(registration);
     setShowRegistrationDetails(true);
   };
 
