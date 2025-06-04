@@ -7,6 +7,7 @@ import { MinistryManagement } from "@/components/admin/MinistryManagement";
 import { ClusterManagement } from "@/components/admin/ClusterManagement";
 import { CategoryManagement } from "@/components/admin/CategoryManagement";
 import { ReportsManagement } from "@/components/admin/ReportsManagement";
+import { BulkRegistrationUpload } from "@/components/admin/BulkRegistrationUpload";
 
 const Admin = () => {
   return (
@@ -33,6 +34,9 @@ const Admin = () => {
           <TabsTrigger value="reports" className="flex-1 data-[state=active]:bg-background">
             Reports
           </TabsTrigger>
+          <TabsTrigger value="bulk-upload" className="flex-1 data-[state=active]:bg-background">
+            Bulk Upload
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="categories">
@@ -53,6 +57,10 @@ const Admin = () => {
 
         <TabsContent value="reports">
           <ReportsManagement />
+        </TabsContent>
+        
+        <TabsContent value="bulk-upload">
+          <BulkRegistrationUpload />
         </TabsContent>
       </Tabs>
     </div>
