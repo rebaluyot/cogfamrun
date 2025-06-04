@@ -1,6 +1,12 @@
 import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
+import { 
+  Sheet, 
+  SheetContent, 
+  SheetTrigger,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import QRCode from "react-qr-code";
@@ -16,25 +22,25 @@ export const PaymentMethod = ({ amount }: PaymentMethodProps) => {
     {
       id: "1",
       name: "COG FamRun Official",
-      number: "0917-123-4567",
-      qr: "https://gcash.qr/cogfamrun1",
+      number: "0999 88. ..88 ",
+      qr: "/assets/famrungcash01.jpeg",
     },
     {
       id: "2",
       name: "COG Events",
       number: "0918-234-5678",
-      qr: "https://gcash.qr/cogfamrun2",
+      qr: "/assets/famrungcash01.jpeg",
     },
     {
       id: "3",
-      name: "COG Sports",
+      name: "COG Sports Ministry",
       number: "0919-345-6789",
-      qr: "https://gcash.qr/cogfamrun3",
+      qr: "/assets/famrungcash01.jpeg",
     },
   ];
   return (
-    <Dialog>
-      <DialogTrigger asChild>
+    <Sheet>
+      <SheetTrigger asChild>
         <button className="w-full bg-white text-[#00A1E4] py-4 rounded-xl font-bold transition-all shadow hover:shadow-md border-2 border-[#00A1E4]/20 hover:border-[#00A1E4] hover:-translate-y-0.5 active:translate-y-0">
           <div className="flex items-center justify-center gap-4">
             <div className="rounded-lg">
@@ -47,10 +53,12 @@ export const PaymentMethod = ({ amount }: PaymentMethodProps) => {
             <span className="text-lg tracking-wide">Pay with GCash</span>
           </div>
         </button>
-      </DialogTrigger>
-      <DialogContent className="max-w-md">
+      </SheetTrigger>
+      <SheetContent side="bottom" className="sm:max-w-md mx-auto h-auto max-h-[90vh] overflow-y-auto pt-6">
+        <SheetHeader>
+          <SheetTitle className="text-2xl font-bold mb-2">GCash Payment</SheetTitle>
+        </SheetHeader>
         <div className="p-4">
-          <h2 className="text-2xl font-bold mb-4">GCash Payment</h2>
           <div className="mb-6">
             <div className="text-lg font-semibold text-green-600">
               Amount to Pay: ₱{amount.toLocaleString()}
@@ -79,7 +87,10 @@ export const PaymentMethod = ({ amount }: PaymentMethodProps) => {
                   {selectedAccount === account.id && (
                     <div className="mt-4">
                       <div className="bg-white p-4 rounded-lg flex justify-center">
+                        {/* 
                         <QRCode value={account.qr} size={200} />
+                        */}
+                        <img src="/assets/qr-famrun.jpeg" alt="GCash QR" className="w-64 mx-auto" />
                       </div>
                       <div className="mt-4 text-sm text-gray-600">
                         <p>1. Open your GCash app</p>
@@ -95,7 +106,7 @@ export const PaymentMethod = ({ amount }: PaymentMethodProps) => {
             ))}
           </RadioGroup>
         </div>
-      </DialogContent>
-    </Dialog>
+      </SheetContent>
+    </Sheet>
   );
 };

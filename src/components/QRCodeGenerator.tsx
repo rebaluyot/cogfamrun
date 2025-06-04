@@ -186,44 +186,44 @@ export const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({ registrationId
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       <div className="text-center">
-        <h1 className="text-3xl font-bold text-green-600 mb-2">Registration Successful! 🎉</h1>
-        <p className="text-gray-600">Your registration has been completed successfully.</p>
+        <h1 className="text-2xl sm:text-3xl font-bold text-green-600 mb-2">Registration Successful! 🎉</h1>
+        <p className="text-sm sm:text-base text-gray-600">Your registration has been completed successfully.</p>
       </div>
 
       <Card>
-        <CardHeader className="text-center">
-          <CardTitle>Registration Details</CardTitle>
-          <CardDescription>Keep this information for your records</CardDescription>
+        <CardHeader className="text-center py-3 sm:py-4">
+          <CardTitle className="text-base sm:text-lg">Registration Details</CardTitle>
+          <CardDescription className="text-xs sm:text-sm">Keep this information for your records</CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="text-center space-y-2">
-            <div className="text-lg font-semibold">Registration ID</div>
-            <div className="text-2xl font-bold text-blue-600 bg-blue-50 p-3 rounded-lg">
+        <CardContent className="space-y-3 sm:space-y-4 px-3 sm:px-6">
+          <div className="text-center space-y-1 sm:space-y-2">
+            <div className="text-base sm:text-lg font-semibold">Registration ID</div>
+            <div className="text-xl sm:text-2xl font-bold text-blue-600 bg-blue-50 p-2 sm:p-3 rounded-lg break-all">
               {registrationId}
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4 p-4 bg-gray-50 rounded-lg">
+          <div className="grid grid-cols-2 gap-3 sm:gap-4 p-3 sm:p-4 bg-gray-50 rounded-lg text-sm sm:text-base">
             <div>
-              <span className="text-sm text-gray-600">Participant:</span>
-              <div className="font-semibold">{participantName}</div>
+              <span className="text-xs sm:text-sm text-gray-600">Participant:</span>
+              <div className="font-semibold truncate">{participantName}</div>
             </div>
             <div>
-              <span className="text-sm text-gray-600">Category:</span>
+              <span className="text-xs sm:text-sm text-gray-600">Category:</span>
               <div>
-                <Badge className={getCategoryColorClass(category)}>{category}</Badge>
+                <Badge className={`${getCategoryColorClass(category)} text-xs sm:text-sm`}>{category}</Badge>
               </div>
             </div>
             <div>
-              <span className="text-sm text-gray-600">Registration Fee:</span>
+              <span className="text-xs sm:text-sm text-gray-600">Registration Fee:</span>
               <div className="font-bold text-green-600">{formatCurrency(price)}</div>
             </div>
             <div>
-              <span className="text-sm text-gray-600">Status:</span>
+              <span className="text-xs sm:text-sm text-gray-600">Status:</span>
               <div>
-                <Badge className="bg-yellow-100 text-yellow-800">Pending Payment</Badge>
+                <Badge className="bg-yellow-100 text-yellow-800 text-xs sm:text-sm">Pending Payment</Badge>
               </div>
             </div>
           </div>
@@ -231,53 +231,53 @@ export const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({ registrationId
       </Card>
 
       <Card>
-        <CardHeader className="text-center">
-          <CardTitle>QR Code for Payment & Kit Collection</CardTitle>
-          <CardDescription>
+        <CardHeader className="text-center py-3 sm:py-4">
+          <CardTitle className="text-base sm:text-lg">QR Code for Payment & Kit Collection</CardTitle>
+          <CardDescription className="text-xs sm:text-sm">
             Use this QR code for payment processing and to claim your race kit and freebies
           </CardDescription>
         </CardHeader>
-        <CardContent className="text-center space-y-4">
+        <CardContent className="text-center space-y-3 sm:space-y-4 px-3 sm:px-6">
           {!qrGenerated ? (
-            <div className="space-y-4">
-              <div className="w-48 h-48 mx-auto bg-gray-100 border-2 border-dashed border-gray-300 flex items-center justify-center rounded-lg">
-                <span className="text-gray-500">QR Code will appear here</span>
+            <div className="space-y-3 sm:space-y-4">
+              <div className="w-40 h-40 sm:w-48 sm:h-48 mx-auto bg-gray-100 border-2 border-dashed border-gray-300 flex items-center justify-center rounded-lg">
+                <span className="text-gray-500 text-xs sm:text-sm px-2">QR Code will appear here</span>
               </div>
               <Button 
                 onClick={generateQR} 
-                className="bg-blue-600 hover:bg-blue-700"
+                className="bg-blue-600 hover:bg-blue-700 text-sm sm:text-base py-2 px-3 sm:py-2 sm:px-4"
                 disabled={isSending}
               >
                 {isSending ? (
                   <>
-                    <div className="animate-spin h-4 w-4 border-2 border-white rounded-full border-t-transparent mr-2"></div>
-                    Sending to Email...
+                    <div className="animate-spin h-3 w-3 sm:h-4 sm:w-4 border-2 border-white rounded-full border-t-transparent mr-2"></div>
+                    <span className="text-sm">Sending to Email...</span>
                   </>
                 ) : "Generate & Send QR Code"}
               </Button>
             </div>
           ) : (
-            <div className="space-y-4">
-              <div ref={qrRef} className="w-48 h-48 mx-auto bg-white border-2 border-gray-300 flex items-center justify-center rounded-lg shadow-md p-2">
+            <div className="space-y-3 sm:space-y-4">
+              <div ref={qrRef} className="w-40 h-40 sm:w-48 sm:h-48 mx-auto bg-white border-2 border-gray-300 flex items-center justify-center rounded-lg shadow-md p-1 sm:p-2">
                 <QRCode
                   value={qrData}
-                  size={180}
-                  style={{ height: "auto", maxWidth: "100%", width: "100%", padding: "1rem" }}
+                  size={150}
+                  style={{ height: "auto", maxWidth: "100%", width: "100%", padding: "0.5rem" }}
                   level="H"
                 />
               </div>
-              <div className="text-sm text-gray-600 max-w-md mx-auto">
-                <p className="font-medium mb-2">QR Code Generated Successfully!</p>
+              <div className="text-xs sm:text-sm text-gray-600 max-w-md mx-auto">
+                <p className="font-medium mb-1 sm:mb-2">QR Code Generated Successfully!</p>
                 <p>Present this QR code at:</p>
-                <ul className="text-left space-y-1 mt-2">
+                <ul className="text-left space-y-0.5 sm:space-y-1 mt-1 sm:mt-2">
                   <li>• Payment counter for fee processing</li>
                   <li>• Registration booth for kit collection</li>
                   <li>• Freebies distribution area</li>
                 </ul>
               </div>
-              <div className="flex gap-2 justify-center">
-                <Button variant="outline" onClick={handleDownload}>Download QR Code</Button>
-                <Button variant="outline" onClick={handlePrint}>Print Registration</Button>
+              <div className="flex flex-wrap gap-2 justify-center">
+                <Button variant="outline" onClick={handleDownload} className="text-xs sm:text-sm py-1 px-2 sm:py-2 sm:px-3">Download QR Code</Button>
+                <Button variant="outline" onClick={handlePrint} className="text-xs sm:text-sm py-1 px-2 sm:py-2 sm:px-3">Print Registration</Button>
               </div>
             </div>
           )}
@@ -285,9 +285,9 @@ export const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({ registrationId
       </Card>
 
       <Card className="bg-blue-50 border-blue-200">
-        <CardContent className="pt-6">
-          <h3 className="font-semibold text-blue-900 mb-2">Important Reminders:</h3>
-          <ul className="text-sm text-blue-800 space-y-1">
+        <CardContent className="pt-4 sm:pt-6 px-4 sm:px-6">
+          <h3 className="font-semibold text-blue-900 mb-2 text-sm sm:text-base">Important Reminders:</h3>
+          <ul className="text-xs sm:text-sm text-blue-800 space-y-0.5 sm:space-y-1">
             <li>• Save your Registration ID: {registrationId}</li>
             <li>• Payment deadline: August 15, 2025</li>
             <li>• Kit collection: August 1-15, 2024</li>
@@ -297,14 +297,14 @@ export const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({ registrationId
         </CardContent>
       </Card>
 
-      <div className="text-center space-y-2">
-        <Link to="/dashboard">
-          <Button variant="outline" className="mr-2">
+      <div className="text-center flex flex-col sm:flex-row justify-center items-center gap-2 sm:space-y-0">
+        <Link to="/dashboard" className="w-full sm:w-auto">
+          <Button variant="outline" className="w-full sm:w-auto text-xs sm:text-sm py-1 px-3 sm:py-2">
             View Dashboard
           </Button>
         </Link>
-        <Link to="/registration">
-          <Button variant="outline">
+        <Link to="/registration" className="w-full sm:w-auto">
+          <Button variant="outline" className="w-full sm:w-auto text-xs sm:text-sm py-1 px-3 sm:py-2">
             Register Another Participant
           </Button>
         </Link>

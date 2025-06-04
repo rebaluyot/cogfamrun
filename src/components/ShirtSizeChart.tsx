@@ -1,16 +1,24 @@
-import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
+import { 
+  Sheet, 
+  SheetContent, 
+  SheetTrigger,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
 
 export const ShirtSizeChart = () => {
   return (
-    <Dialog>
-      <DialogTrigger asChild>
+    <Sheet>
+      <SheetTrigger asChild>
         <span className="text-xs text-blue-600 underline cursor-pointer hover:text-blue-800">
           View Size Chart
         </span>
-      </DialogTrigger>
-      <DialogContent className="max-w-3xl">
-        <div className="p-4">
-          <h2 className="text-2xl font-bold mb-4">Shirt Size Chart</h2>
+      </SheetTrigger>
+      <SheetContent side="bottom" className="max-h-[90vh] overflow-y-auto">
+        <SheetHeader>
+          <SheetTitle className="text-2xl font-bold mb-4">Shirt Size Chart</SheetTitle>
+        </SheetHeader>
+        <div className="p-2">
           <div className="overflow-x-auto">
             <table className="w-full border-collapse">
               <thead>
@@ -97,7 +105,7 @@ export const ShirtSizeChart = () => {
             <p>* Length is measured from highest point of shoulder to bottom hem</p>
           </div>
         </div>
-      </DialogContent>
-    </Dialog>
+      </SheetContent>
+    </Sheet>
   );
 };

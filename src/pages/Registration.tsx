@@ -297,10 +297,10 @@ const Registration = () => {
   }
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white">
-      <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto px-3 sm:px-4 py-6 sm:py-8">
         <div className="max-w-2xl mx-auto">
-          <div className="mb-8 text-center">
-            <div className="flex flex-col items-center gap-6">
+          <div className="mb-6 sm:mb-8 text-center">
+            <div className="flex flex-col items-center gap-4 sm:gap-6">
               {/* 
               <div className="w-full max-w-[200px] aspect-square relative">
                 <img 
@@ -311,90 +311,95 @@ const Registration = () => {
               </div>
               */}
               <div className="relative">
-                <h2 className="text-4xl font-black text-red-600 mb-3 tracking-wide" style={{
+                <h2 className="text-3xl sm:text-4xl font-black text-red-600 mb-2 sm:mb-3 tracking-wide" style={{
                   textShadow: '2px 2px 0 rgba(0,0,0,0.1)'
                 }}>REGISTER NOW!</h2>
-                <p className="text-lg text-gray-700 font-medium">August 22, 2025 | New Dasmariñas Grandstand and Oval</p>
+                <p className="text-base sm:text-lg text-gray-700 font-medium">August 22, 2025 | New Dasmariñas Grandstand and Oval</p>
               </div>
             </div>
-            <div className="flex justify-center gap-4 mt-6">
-              <span className="bg-blue-600 text-white px-4 py-1 rounded-full text-sm font-bold">10KM</span>
-              <span className="bg-red-600 text-white px-4 py-1 rounded-full text-sm font-bold">6KM</span>
-              <span className="bg-yellow-500 text-white px-4 py-1 rounded-full text-sm font-bold">3KM</span>
+            <div className="flex justify-center gap-3 sm:gap-4 mt-4 sm:mt-6">
+              <span className="bg-blue-600 text-white px-3 sm:px-4 py-1 rounded-full text-xs sm:text-sm font-bold">10KM</span>
+              <span className="bg-red-600 text-white px-3 sm:px-4 py-1 rounded-full text-xs sm:text-sm font-bold">6KM</span>
+              <span className="bg-yellow-500 text-white px-3 sm:px-4 py-1 rounded-full text-xs sm:text-sm font-bold">3KM</span>
             </div>
           </div>
           <Card className="border-2 border-blue-300 overflow-hidden">
-            <CardHeader className="bg-gradient-to-r from-blue-600 to-red-500 text-white">
-              <CardTitle className="text-2xl font-bold">Registration Form</CardTitle>
-              <CardDescription className="text-white/90">Please provide your information accurately</CardDescription>
+            <CardHeader className="bg-gradient-to-r from-blue-600 to-red-500 text-white p-4 sm:p-6">
+              <CardTitle className="text-xl sm:text-2xl font-bold">Registration Form</CardTitle>
+              <CardDescription className="text-white/90 text-sm sm:text-base">Please provide your information accurately</CardDescription>
             </CardHeader>
-            <CardContent className="pt-6">
-              <form onSubmit={handleSubmit} className="space-y-6">
+            <CardContent className="pt-4 sm:pt-6 px-3 sm:px-6">
+              <form onSubmit={handleSubmit} className="space-y-5 sm:space-y-6">
                 {/* Personal Information */}
-                <div className="space-y-4">
-                  <h3 className="text-lg font-semibold">Personal Information</h3>
-                  <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-3 sm:space-y-4">
+                  <h3 className="text-base sm:text-lg font-semibold">Personal Information</h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                     <div>
-                      <Label htmlFor="firstName">First Name *</Label>
+                      <Label htmlFor="firstName" className="text-sm sm:text-base">First Name *</Label>
                       <Input
                         id="firstName"
                         value={formData.firstName}
                         onChange={(e) => handleInputChange("firstName", e.target.value)}
                         required
+                        className="mt-1 sm:mt-2 h-9 sm:h-10 text-sm sm:text-base"
                       />
                     </div>
                     <div>
-                      <Label htmlFor="lastName">Last Name *</Label>
+                      <Label htmlFor="lastName" className="text-sm sm:text-base">Last Name *</Label>
                       <Input
                         id="lastName"
                         value={formData.lastName}
                         onChange={(e) => handleInputChange("lastName", e.target.value)}
                         required
+                        className="mt-1 sm:mt-2 h-9 sm:h-10 text-sm sm:text-base"
                       />
                     </div>
                   </div>
                   <div>
-                    <Label htmlFor="email">Email Address *</Label>
+                    <Label htmlFor="email" className="text-sm sm:text-base">Email Address *</Label>
                     <Input
                       id="email"
                       type="email"
                       value={formData.email}
                       onChange={(e) => handleInputChange("email", e.target.value)}
                       required
+                      className="mt-1 sm:mt-2 h-9 sm:h-10 text-sm sm:text-base"
                     />
                   </div>
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                     <div>
-                      <Label htmlFor="phone">Phone Number</Label>
+                      <Label htmlFor="phone" className="text-sm sm:text-base">Phone Number</Label>
                       <Input
                         id="phone"
                         value={formData.phone}
                         onChange={(e) => handleInputChange("phone", e.target.value)}
+                        className="mt-1 sm:mt-2 h-9 sm:h-10 text-sm sm:text-base"
                       />
                     </div>
                     <div>
-                      <Label htmlFor="age">Age</Label>
+                      <Label htmlFor="age" className="text-sm sm:text-base">Age</Label>
                       <Input
                         id="age"
                         type="number"
                         value={formData.age}
                         onChange={(e) => handleInputChange("age", e.target.value)}
+                        className="mt-1 sm:mt-2 h-9 sm:h-10 text-sm sm:text-base"
                       />
                     </div>
                   </div>                <div>
-                    <Label>Gender</Label>
+                    <Label className="text-sm sm:text-base">Gender</Label>
                     <RadioGroup
                       value={formData.gender}
                       onValueChange={(value) => handleInputChange("gender", value)}
-                      className="flex space-x-4 mt-2"
+                      className="flex space-x-4 mt-1 sm:mt-2"
                     >
                       <div className="flex items-center space-x-2">
                         <RadioGroupItem value="male" id="male" />
-                        <Label htmlFor="male">Male</Label>
+                        <Label htmlFor="male" className="text-sm sm:text-base">Male</Label>
                       </div>
                       <div className="flex items-center space-x-2">
                         <RadioGroupItem value="female" id="female" />
-                        <Label htmlFor="female">Female</Label>
+                        <Label htmlFor="female" className="text-sm sm:text-base">Female</Label>
                       </div>
                     </RadioGroup>
                   </div>
@@ -402,7 +407,7 @@ const Registration = () => {
                   {/* Shirt Size */}
                   <div>
                     <div className="flex items-center justify-between">
-                      <Label htmlFor="shirtSize">Shirt Size *</Label>
+                      <Label htmlFor="shirtSize" className="text-sm sm:text-base">Shirt Size *</Label>
                       <ShirtSizeChart />
                     </div>
                     <Select 
@@ -410,7 +415,7 @@ const Registration = () => {
                       onValueChange={(value) => handleInputChange("shirtSize", value)}
                       required
                     >
-                      <SelectTrigger>
+                      <SelectTrigger className="mt-1 sm:mt-2 h-9 sm:h-10 text-sm sm:text-base">
                         <SelectValue placeholder="Select shirt size" />
                       </SelectTrigger>
                       <SelectContent>
@@ -427,20 +432,21 @@ const Registration = () => {
                         <SelectItem value="5XL">5XL (Width: 26" | Length: 34")</SelectItem>
                       </SelectContent>
                     </Select>
-                    <div className="mt-2 text-xs text-gray-500">
+                    <div className="mt-1 sm:mt-2 text-xs text-gray-500">
                       You'll receive a finisher shirt in this size. Click "View Size Chart" for detailed measurements.
                     </div>
                   </div>
                 </div>
 
-                {/* Race Category */}              <div className="space-y-4">
-                  <h3 className="text-lg font-semibold">Race Category</h3>
+                {/* Race Category */}              
+                <div className="space-y-3 sm:space-y-4">
+                  <h3 className="text-base sm:text-lg font-semibold">Race Category</h3>
                   <div>
-                    <Label>Select Category *</Label>
+                    <Label className="text-sm sm:text-base">Select Category *</Label>
                     <RadioGroup
                       value={formData.category}
                       onValueChange={(value) => handleInputChange("category", value)}
-                      className="mt-2 space-y-3"
+                      className="mt-1 sm:mt-2 space-y-2 sm:space-y-3"
                     >
                       {categories?.map((category) => {
                         let bgColor = "";
@@ -458,15 +464,15 @@ const Registration = () => {
                         }
                         
                         return (
-                          <div key={category.id} className={`flex items-center justify-between p-3 border rounded-lg ${bgColor}`}>
-                            <div className="flex items-center gap-3">
+                          <div key={category.id} className={`flex items-center justify-between p-2 sm:p-3 border rounded-lg ${bgColor}`}>
+                            <div className="flex items-center gap-2 sm:gap-3">
                               <RadioGroupItem value={category.name} id={category.name} />
                               <div>
-                                <Label htmlFor={category.name} className="text-lg font-medium">{category.name} Run</Label>
-                                <p className="text-sm text-gray-600">{description}</p>
+                                <Label htmlFor={category.name} className="text-base sm:text-lg font-medium">{category.name} Run</Label>
+                                <p className="text-xs sm:text-sm text-gray-600">{description}</p>
                               </div>
                             </div>
-                            <span className="font-bold text-green-700 text-lg">₱{category.price}</span>
+                            <span className="font-bold text-green-700 text-base sm:text-lg">₱{category.price}</span>
                           </div>
                         );
                       })}
@@ -475,23 +481,23 @@ const Registration = () => {
                 </div>
 
                 {/* Church Information */}
-                <div className="space-y-4">
+                <div className="space-y-3 sm:space-y-4">
                   <div className="flex items-center space-x-2">
                     <Checkbox
                       id="churchAttendee"
                       checked={formData.isChurchAttendee}
                       onCheckedChange={(checked) => handleInputChange("isChurchAttendee", checked)}
                     />
-                    <Label htmlFor="churchAttendee">I am a COG Dasma church attendee</Label>
+                    <Label htmlFor="churchAttendee" className="text-sm sm:text-base">I am a COG Dasma church attendee</Label>
                   </div>
 
                   {formData.isChurchAttendee && (
-                    <div className="space-y-4 pl-6 border-l-2 border-blue-200">
-                      <h3 className="text-lg font-semibold">Church Information</h3>
+                    <div className="space-y-3 sm:space-y-4 pl-4 sm:pl-6 border-l-2 border-blue-200">
+                      <h3 className="text-base sm:text-lg font-semibold">Church Information</h3>
                       <div>
-                        <Label htmlFor="department">Department *</Label>
+                        <Label htmlFor="department" className="text-sm sm:text-base">Department *</Label>
                         <Select value={formData.department} onValueChange={(value) => handleInputChange("department", value)}>
-                          <SelectTrigger>
+                          <SelectTrigger className="mt-1 sm:mt-2 h-9 sm:h-10 text-sm sm:text-base">
                             <SelectValue placeholder="Select department" />
                           </SelectTrigger>
                           <SelectContent>
@@ -506,9 +512,9 @@ const Registration = () => {
 
                       {formData.department && (
                         <div>
-                          <Label htmlFor="ministry">Ministry *</Label>
+                          <Label htmlFor="ministry" className="text-sm sm:text-base">Ministry *</Label>
                           <Select value={formData.ministry} onValueChange={(value) => handleInputChange("ministry", value)}>
-                            <SelectTrigger>
+                            <SelectTrigger className="mt-1 sm:mt-2 h-9 sm:h-10 text-sm sm:text-base">
                               <SelectValue placeholder="Select ministry" />
                             </SelectTrigger>
                             <SelectContent>
@@ -524,9 +530,9 @@ const Registration = () => {
 
                       {formData.ministry && (
                         <div>
-                          <Label htmlFor="cluster">Cluster *</Label>
+                          <Label htmlFor="cluster" className="text-sm sm:text-base">Cluster *</Label>
                           <Select value={formData.cluster} onValueChange={(value) => handleInputChange("cluster", value)}>
-                            <SelectTrigger>
+                            <SelectTrigger className="mt-1 sm:mt-2 h-9 sm:h-10 text-sm sm:text-base">
                               <SelectValue placeholder="Select cluster" />
                             </SelectTrigger>
                             <SelectContent>
@@ -544,69 +550,72 @@ const Registration = () => {
                 </div>
 
                 {/* Emergency Contact */}
-                <div className="space-y-4">
-                  <h3 className="text-lg font-semibold">Emergency Contact</h3>
-                  <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-3 sm:space-y-4">
+                  <h3 className="text-base sm:text-lg font-semibold">Emergency Contact</h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                     <div>
-                      <Label htmlFor="emergencyContact">Emergency Contact Name</Label>
+                      <Label htmlFor="emergencyContact" className="text-sm sm:text-base">Emergency Contact Name</Label>
                       <Input
                         id="emergencyContact"
                         value={formData.emergencyContact}
                         onChange={(e) => handleInputChange("emergencyContact", e.target.value)}
+                        className="mt-1 sm:mt-2 h-9 sm:h-10 text-sm sm:text-base"
                       />
                     </div>
                     <div>
-                      <Label htmlFor="emergencyPhone">Emergency Contact Phone</Label>
+                      <Label htmlFor="emergencyPhone" className="text-sm sm:text-base">Emergency Contact Phone</Label>
                       <Input
                         id="emergencyPhone"
                         value={formData.emergencyPhone}
                         onChange={(e) => handleInputChange("emergencyPhone", e.target.value)}
+                        className="mt-1 sm:mt-2 h-9 sm:h-10 text-sm sm:text-base"
                       />
                     </div>
                   </div>
                   <div>
-                    <Label htmlFor="medicalConditions">Medical Conditions (if any)</Label>
+                    <Label htmlFor="medicalConditions" className="text-sm sm:text-base">Medical Conditions (if any)</Label>
                     <Input
                       id="medicalConditions"
                       value={formData.medicalConditions}
                       onChange={(e) => handleInputChange("medicalConditions", e.target.value)}
                       placeholder="e.g., Asthma, Heart condition, etc."
+                      className="mt-1 sm:mt-2 h-9 sm:h-10 text-sm sm:text-base"
                     />
                   </div>
                 </div>
 
                 {/* Freebies Information */}
-                <div className="p-4 bg-gradient-to-br from-blue-50 to-white rounded-lg border border-blue-200">
-                  <h3 className="text-lg font-semibold text-blue-700 mb-4 flex items-center gap-2">
-                    <span className="bg-blue-700 text-white w-6 h-6 rounded-full flex items-center justify-center text-sm">✓</span>
+                <div className="p-3 sm:p-4 bg-gradient-to-br from-blue-50 to-white rounded-lg border border-blue-200">
+                  <h3 className="text-base sm:text-lg font-semibold text-blue-700 mb-3 sm:mb-4 flex items-center gap-2">
+                    <span className="bg-blue-700 text-white w-5 h-5 sm:w-6 sm:h-6 rounded-full flex items-center justify-center text-xs sm:text-sm">✓</span>
                     Race Kit Inclusions
                   </h3>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
+                  <div className="grid grid-cols-2 gap-2 sm:gap-4 text-sm sm:text-base">
+                    <div className="space-y-1 sm:space-y-2">
                       <div className="flex items-center gap-2">
-                        <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
+                        <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-blue-600 rounded-full"></div>
                         <span>Finisher Medal</span>
                       </div>
                       <div className="flex items-center gap-2">
-                        <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
+                        <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-blue-600 rounded-full"></div>
                         <span>Event Singlet</span>
                       </div>
                       <div className="flex items-center gap-2">
-                        <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
+                        <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-blue-600 rounded-full"></div>
                         <span>Finisher Shirt</span>
                       </div>
                     </div>
-                    <div className="space-y-2">
+                    <div className="space-y-1 sm:space-y-2">
                       <div className="flex items-center gap-2">
-                        <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
+                        <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-blue-600 rounded-full"></div>
                         <span>Runner Bag</span>
                       </div>
                       <div className="flex items-center gap-2">
-                        <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
+                        <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-blue-600 rounded-full"></div>
                         <span>Water</span>
                       </div>
                       <div className="flex items-center gap-2">
-                        <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
+                        <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-blue-600 rounded-full"></div>
                         <span>Bib with RFID</span>
                       </div>
                     </div>
@@ -614,19 +623,19 @@ const Registration = () => {
                 </div>
 
                 {/* Payment Section */}
-                <div className="space-y-4 mt-6">
-                  <h3 className="text-lg font-semibold">Payment Method</h3>
-                  <div className="p-4 bg-gray-50 rounded-lg border">
-                    <div className="mb-4">
-                      <div className="text-lg font-semibold">Total Amount:</div>
-                      <div className="text-3xl font-bold text-green-600">₱{getPrice(formData.category)}</div>
+                <div className="space-y-3 sm:space-y-4 mt-4 sm:mt-6">
+                  <h3 className="text-base sm:text-lg font-semibold">Payment Method</h3>
+                  <div className="p-3 sm:p-4 bg-gray-50 rounded-lg border">
+                    <div className="mb-3 sm:mb-4">
+                      <div className="text-base sm:text-lg font-semibold">Total Amount:</div>
+                      <div className="text-2xl sm:text-3xl font-bold text-green-600">₱{getPrice(formData.category)}</div>
                     </div>
                     
-                    <div className="space-y-4">
+                    <div className="space-y-3 sm:space-y-4">
                       <PaymentMethod amount={getPrice(formData.category)} />
                       
-                      <div className="mt-4">
-                        <Label htmlFor="paymentProof">Upload Payment Screenshot</Label>
+                      <div className="mt-3 sm:mt-4">
+                        <Label htmlFor="paymentProof" className="text-sm sm:text-base">Upload Payment Screenshot</Label>
                         <Input
                           id="paymentProof"
                           type="file"
@@ -643,7 +652,7 @@ const Registration = () => {
                             }
                             setPaymentProof(file || null);
                           }}
-                          className="mt-2"
+                          className="mt-1 sm:mt-2 text-sm sm:text-base"
                         />
                         <p className="text-xs text-gray-500 mt-1">
                           Please upload a screenshot of your GCash payment confirmation (maximum 5MB)
@@ -655,12 +664,12 @@ const Registration = () => {
 
                 <Button 
                   type="submit" 
-                  className="w-full bg-gradient-to-r from-blue-600 via-red-500 to-yellow-500 hover:from-blue-700 hover:via-red-600 hover:to-yellow-600 text-white py-6 text-xl font-bold tracking-wide mt-6"
+                  className="w-full bg-gradient-to-r from-blue-600 via-red-500 to-yellow-500 hover:from-blue-700 hover:via-red-600 hover:to-yellow-600 text-white py-4 sm:py-6 text-lg sm:text-xl font-bold tracking-wide mt-4 sm:mt-6"
                   disabled={isSubmitting || isUploading || !paymentProof}
                 >
                   {isSubmitting || isUploading ? (
                     <span className="flex items-center gap-2 justify-center">
-                      <span className="animate-spin h-5 w-5 border-t-2 border-white rounded-full"></span>
+                      <span className="animate-spin h-4 w-4 sm:h-5 sm:w-5 border-t-2 border-white rounded-full"></span>
                       {isUploading ? 'Uploading...' : 'Processing...'}
                     </span>
                   ) : 'Complete Registration'}
