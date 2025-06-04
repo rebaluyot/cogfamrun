@@ -10,6 +10,8 @@ import {
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import QRCode from "react-qr-code";
+import { usePaymentMethods } from "@/hooks/usePaymentMethods";
+import { Loader2 } from "lucide-react";
 
 interface PaymentMethodProps {
   amount: number;
@@ -17,27 +19,32 @@ interface PaymentMethodProps {
 
 export const PaymentMethod = ({ amount }: PaymentMethodProps) => {
   const [selectedAccount, setSelectedAccount] = useState("");
+  const { data: paymentMethods, isLoading, error } = usePaymentMethods();
+  
+  // Show loading state if data is being fetched
+  if (isLoading) {
+    return (
+      <div className="w-full bg-white py-4 rounded-xl shadow border-2 border-[#00A1E4]/20 flex justify-center items-center">
+        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+  
+  // Show error state if data fetch failed
+  if (error || !paymentMethods || paymentMethods.length === 0) {
+    return (
+      <div className="w-full bg-white text-center py-4 rounded-xl shadow border-2 border-[#00A1E4]/20 text-muted-foreground">
+        Payment methods unavailable
+      </div>
+    );
+  }
 
-  const gcashAccounts = [
-    {
-      id: "1",
-      name: "COG FamRun Official",
-      number: "0999 88. ..88 ",
-      qr: "/assets/famrungcash01.jpeg",
-    },
-    {
-      id: "2",
-      name: "COG Events",
-      number: "0918-234-5678",
-      qr: "/assets/famrungcash01.jpeg",
-    },
-    {
-      id: "3",
-      name: "COG Sports Ministry",
-      number: "0919-345-6789",
-      qr: "/assets/famrungcash01.jpeg",
-    },
-  ];
+  // Get the first available payment method for button display
+  const primaryMethod = paymentMethods.find(pm => pm.active) || paymentMethods[0];
+  const paymentTypeLabel = primaryMethod.account_type === 'gcash' ? 'GCash' : 
+    primaryMethod.account_type === 'paymaya' ? 'PayMaya' : 
+    primaryMethod.account_type === 'bank' ? 'Bank Transfer' : 'Cash';
+    
   return (
     <Sheet>
       <SheetTrigger asChild>
@@ -45,18 +52,18 @@ export const PaymentMethod = ({ amount }: PaymentMethodProps) => {
           <div className="flex items-center justify-center gap-4">
             <div className="rounded-lg">
               <img 
-                src="/assets/gcash-logo.png" 
-                alt="GCash" 
+                src={paymentTypeLabel === 'GCash' ? "/assets/gcash-logo.png" : "/assets/solid-fam-run-logo.png"} 
+                alt={paymentTypeLabel} 
                 className="h-8 w-24 object-contain"
               />
             </div>
-            <span className="text-lg tracking-wide">Pay with GCash</span>
+            <span className="text-lg tracking-wide">Pay with {paymentTypeLabel}</span>
           </div>
         </button>
       </SheetTrigger>
       <SheetContent side="bottom" className="sm:max-w-md mx-auto h-auto max-h-[90vh] overflow-y-auto pt-6">
         <SheetHeader>
-          <SheetTitle className="text-2xl font-bold mb-2">GCash Payment</SheetTitle>
+          <SheetTitle className="text-2xl font-bold mb-2">{paymentTypeLabel} Payment</SheetTitle>
         </SheetHeader>
         <div className="p-4">
           <div className="mb-6">
@@ -70,31 +77,38 @@ export const PaymentMethod = ({ amount }: PaymentMethodProps) => {
             onValueChange={setSelectedAccount}
             className="space-y-4"
           >
-            {gcashAccounts.map((account) => (
-              <Card key={account.id} className={`transition-all ${
-                selectedAccount === account.id ? 'ring-2 ring-blue-500' : ''
+            {paymentMethods.filter(method => method.active).map((method) => (
+              <Card key={method.id} className={`transition-all ${
+                selectedAccount === String(method.id) ? 'ring-2 ring-blue-500' : ''
               }`}>
                 <CardContent className="p-4">
                   <div className="flex items-start gap-3">
-                    <RadioGroupItem value={account.id} id={account.id} />
+                    <RadioGroupItem value={String(method.id)} id={String(method.id)} />
                     <div className="flex-grow">
-                      <Label htmlFor={account.id} className="text-base font-medium">
-                        {account.name}
+                      <Label htmlFor={String(method.id)} className="text-base font-medium">
+                        {method.name}
                       </Label>
-                      <p className="text-sm text-gray-600">{account.number}</p>
+                      <p className="text-sm text-gray-600">{method.account_number}</p>
                     </div>
                   </div>
-                  {selectedAccount === account.id && (
+                  {selectedAccount === String(method.id) && (
                     <div className="mt-4">
                       <div className="bg-white p-4 rounded-lg flex justify-center">
-                        {/* 
-                        <QRCode value={account.qr} size={200} />
-                        */}
-                        <img src="/assets/qr-famrun.jpeg" alt="GCash QR" className="w-64 mx-auto" />
+                        {method.qr_image_url ? (
+                          <img 
+                            src={method.qr_image_url} 
+                            alt={`${method.name} QR Code`} 
+                            className="w-64 mx-auto"
+                          />
+                        ) : (
+                          <div className="w-64 h-64 flex items-center justify-center text-muted-foreground border rounded">
+                            No QR code available
+                          </div>
+                        )}
                       </div>
                       <div className="mt-4 text-sm text-gray-600">
-                        <p>1. Open your GCash app</p>
-                        <p>2. Scan this QR code or send to {account.number}</p>
+                        <p>1. Open your {paymentTypeLabel} app</p>
+                        <p>2. Scan this QR code or send to {method.account_number}</p>
                         <p>3. Enter the exact amount: ₱{amount.toLocaleString()}</p>
                         <p>4. Take a screenshot of your payment confirmation</p>
                         <p>5. Upload the screenshot below</p>

@@ -133,6 +133,39 @@ export type Database = {
           },
         ]
       }
+      payment_methods: {
+        Row: {
+          id: number
+          name: string
+          account_number: string
+          qr_image_url: string | null
+          account_type: string
+          active: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: number
+          name: string
+          account_number: string
+          qr_image_url?: string | null
+          account_type?: string
+          active?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: number
+          name?: string
+          account_number?: string
+          qr_image_url?: string | null
+          account_type?: string
+          active?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       registrations: {
         Row: {
           age: number | null

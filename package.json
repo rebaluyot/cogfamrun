@@ -10,7 +10,11 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "seed": "node scripts/seed-data.js",
-    "setup-data": "node scripts/setup-data.js"
+    "setup-data": "node scripts/setup-data.js",
+    "payment:setup": "node scripts/setup-payment-system.mjs",
+    "payment:test": "node scripts/e2e-payment-test.mjs",
+    "payment:diagnose": "node scripts/payment-system-diagnostic.mjs",
+    "payment:fix-storage": "node scripts/fix-payment-storage.mjs"
   },
   "dependencies": {
     "@emailjs/browser": "^3.12.1",
