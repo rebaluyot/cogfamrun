@@ -139,9 +139,9 @@ export const BulkRegistrationUpload = () => {
       ["- status: Optional, one of: 'pending', 'paid', 'completed', 'cancelled' (defaults to 'pending')"],
       [""],
       ["Note: Categories and prices:"],
-      ["- 3K: ₱800"],
-      ["- 6K: ₱1,200"],
-      ["- 10K: ₱1,500"]
+      ["- 3K: ₱1,000"],
+      ["- 6K: ₱1,000"],
+      ["- 10K: ₱1,000"]
     ];
     
     const ws = XLSX.utils.json_to_sheet(templateData);
