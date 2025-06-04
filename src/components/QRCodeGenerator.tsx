@@ -107,32 +107,105 @@ export const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({ registrationId
   };
 
   const handlePrint = () => {
-    const printWindow = window.open('', '_blank');
-    if (!printWindow) {
-      toast({
-        title: "Error",
-        description: "Failed to open print window. Please check your popup blocker.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    printWindow.document.write(`
+    // Create a print-friendly iframe that stays within the page
+    const printFrame = document.createElement('iframe');
+    printFrame.style.position = 'fixed';
+    printFrame.style.right = '0';
+    printFrame.style.bottom = '0';
+    printFrame.style.width = '0';
+    printFrame.style.height = '0';
+    printFrame.style.border = 'none';
+    document.body.appendChild(printFrame);
+    
+    const printContent = `
+      <!DOCTYPE html>
       <html>
         <head>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
           <title>CogFamRun Registration - ${registrationId}</title>
           <style>
-            body { font-family: Arial, sans-serif; padding: 20px; line-height: 1.6; }
-            .header { text-align: center; margin-bottom: 30px; }
-            .section { margin-bottom: 20px; }
-            .qr-code { text-align: center; margin: 20px 0; }
-            .details { margin-bottom: 20px; }
-            .details div { margin: 10px 0; }
-            .reminder { background: #f0f7ff; padding: 15px; border-radius: 8px; }
-            .footer { margin-top: 30px; text-align: center; font-size: 0.9em; }
+            body { 
+              font-family: Arial, sans-serif; 
+              padding: 15px; 
+              line-height: 1.6;
+              margin: 0;
+            }
+            .header { 
+              text-align: center; 
+              margin-bottom: 20px; 
+            }
+            .header h1 {
+              font-size: 24px;
+              margin-bottom: 10px;
+            }
+            .header h2 {
+              font-size: 18px;
+              margin-top: 0;
+            }
+            .section { 
+              margin-bottom: 20px; 
+            }
+            .section h3 {
+              font-size: 16px;
+              margin-bottom: 10px;
+            }
+            .qr-code { 
+              text-align: center; 
+              margin: 20px 0; 
+            }
+            .details { 
+              margin-bottom: 20px; 
+            }
+            .details div { 
+              margin: 8px 0; 
+            }
+            .reminder { 
+              background: #f0f7ff; 
+              padding: 12px; 
+              border-radius: 8px; 
+            }
+            .reminder ul {
+              margin: 10px 0;
+              padding-left: 20px;
+            }
+            .footer { 
+              margin-top: 20px; 
+              text-align: center; 
+              font-size: 0.9em; 
+            }
+            .print-button {
+              display: block;
+              margin: 20px auto;
+              padding: 10px 20px;
+              background: #0066cc;
+              color: white;
+              border: none;
+              border-radius: 5px;
+              font-size: 16px;
+              cursor: pointer;
+            }
+            .print-button:hover {
+              background: #0055aa;
+            }
             @media print {
               body { -webkit-print-color-adjust: exact; }
-              button { display: none; }
+              .print-button { display: none; }
+            }
+            @media screen and (max-width: 480px) {
+              body {
+                padding: 10px;
+                font-size: 14px;
+              }
+              .header h1 {
+                font-size: 20px;
+              }
+              .header h2 {
+                font-size: 16px;
+              }
+              .section h3 {
+                font-size: 15px;
+              }
             }
           </style>
         </head>
@@ -155,7 +228,7 @@ export const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({ registrationId
             <h3>QR Code for Payment & Kit Collection</h3>
             <img src="${qrRef.current?.querySelector('svg')?.outerHTML ? 
               'data:image/svg+xml;base64,' + btoa(qrRef.current.querySelector('svg')?.outerHTML || '') : 
-              ''}" alt="QR Code" style="width: 200px; height: 200px;"/>
+              ''}" alt="QR Code" style="width: 180px; height: 180px; max-width: 100%;"/>
             <p><em>Present this QR code at the payment counter and kit collection area</em></p>
           </div>
 
@@ -172,17 +245,51 @@ export const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({ registrationId
           <div class="footer">
             <p>For inquiries, please contact the event organizers.</p>
           </div>
+          
+          <button class="print-button" onclick="printRegistration()">Print this page</button>
 
           <script>
-            window.onload = () => {
+            function printRegistration() {
               window.print();
-              setTimeout(() => window.close(), 500);
-            };
+            }
           </script>
         </body>
       </html>
-    `);
-    printWindow.document.close();
+    `;
+    
+    // Write content to the iframe
+    const frameDoc = printFrame.contentWindow.document;
+    frameDoc.open();
+    frameDoc.write(printContent);
+    frameDoc.close();
+    
+    // Once loaded, trigger print but don't close automatically
+    printFrame.onload = function() {
+      try {
+        printFrame.contentWindow.focus();
+        printFrame.contentWindow.print();
+        
+        // Show success message
+        setTimeout(() => {
+          toast({
+            title: "Ready to print",
+            description: "Print dialog has been opened. Your registration details are ready to print.",
+          });
+        }, 500);
+      } catch (err) {
+        console.error('Error printing:', err);
+        toast({
+          title: "Error",
+          description: "Could not open print dialog. Please try again.",
+          variant: "destructive",
+        });
+      }
+      
+      // Remove the frame after a delay (but keep it long enough for print to complete)
+      setTimeout(() => {
+        document.body.removeChild(printFrame);
+      }, 5000);
+    };
   };
 
   return (
