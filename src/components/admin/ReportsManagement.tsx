@@ -66,6 +66,10 @@ export const ReportsManagement = () => {
     department: reg.department,
     ministry: reg.ministry,
     cluster: reg.cluster,
+    paymentMethod: reg.payment_method_name,
+    payment_date: reg.payment_date,
+    payment_reference_number: reg.payment_reference_number,
+    payment_notes: reg.payment_notes,
     status: reg.status ? reg.status.charAt(0).toUpperCase() + reg.status.slice(1) : "Pending",
     registeredAt: new Date(reg.created_at).toLocaleDateString(),
     fee: reg.price,
@@ -153,7 +157,11 @@ export const ReportsManagement = () => {
         } else if (selectedReport === "financial-summary") {
           return {
             ...baseData,
-            "Payment Status": reg.status === "Confirmed" ? "Paid" : "Unpaid"
+            "Payment Status": reg.status === "Confirmed" ? "Paid" : "Unpaid",
+            "Payment Method": reg.paymentMethod,
+            "Payment Reference": reg.payment_reference_number,
+            "Payment Date": reg.payment_date,
+            "Payment Notes": reg.payment_notes
           };
         }
 
