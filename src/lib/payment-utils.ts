@@ -41,6 +41,9 @@ interface RegistrationWithPayment {
   first_name: string;
   payment_status: string | null;
   payment_date?: string | null;
+  payment_method_id?: number | null;
+  payment_reference_number?: string | null;
+  payment_method_name?: string;
 }
 
 /**
@@ -112,11 +115,16 @@ export const generatePaymentReceipt = async (
 ): Promise<{ success: boolean; receiptNumber?: string; error?: any }> => {
   try {
     // Check if receipt already exists
-    const { data: existingReceipt } = await (supabase
+    const { data: existingReceipt, error: fetchError } = await (supabase
       .from("payment_receipts" as any) as any)
       .select("receipt_number")
       .eq("registration_id", registrationId)
       .single();
+      
+    if (fetchError && fetchError.code !== "PGRST116") {
+      console.error("Error checking existing receipt:", fetchError);
+      throw fetchError;
+    }
 
     if (existingReceipt && existingReceipt.receipt_number) {
       return { 
@@ -149,7 +157,10 @@ export const generatePaymentReceipt = async (
       generated_by: generatedBy,
     });
 
-    if (error) throw error;
+    if (error) {
+      console.error("Error inserting receipt record:", error);
+      throw new Error(`Failed to insert receipt record: ${error.message || error}`);
+    }
 
     return {
       success: true,
@@ -206,7 +217,11 @@ export const updatePaymentStatus = async (
       payment_notes: notes,
       payment_confirmed_by: changedBy,
       status: newStatus === "confirmed" ? "confirmed" : "pending",
-      payment_date: newStatus === "confirmed" ? new Date().toISOString() : registration.payment_date
+      payment_date: newStatus === "confirmed" ? new Date().toISOString() : registration.payment_date,
+      // Include payment method and reference number if they're provided in the registration object
+      // This allows these fields to be updated as part of the status update
+      ...(registration.payment_method_id !== undefined && { payment_method_id: registration.payment_method_id }),
+      ...(registration.payment_reference_number !== undefined && { payment_reference_number: registration.payment_reference_number })
     };
     
     const { error: updateError } = await supabase

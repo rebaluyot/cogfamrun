@@ -85,9 +85,15 @@ export const PaymentReceiptComponent: React.FC<PaymentReceiptComponentProps> = (
       fetchReceipt();
     } catch (err) {
       console.error("Error generating receipt:", err);
+      
+      // Provide a more detailed error message
+      const errorMessage = err instanceof Error 
+        ? err.message 
+        : "Unknown error occurred";
+        
       toast({
         title: "Error",
-        description: "Failed to generate receipt",
+        description: `Failed to generate receipt: ${errorMessage}`,
         variant: "destructive",
       });
     } finally {

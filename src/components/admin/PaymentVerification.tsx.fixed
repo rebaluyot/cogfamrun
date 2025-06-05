@@ -198,7 +198,7 @@ export const PaymentVerification = () => {
       let updatedRegistration = { ...selectedRegistration };
       
       // Apply payment method update if selected
-      if (showPaymentMethodField && updatedPaymentMethodId && updatedPaymentMethodId !== "no_change") {
+      if (showPaymentMethodField && updatedPaymentMethodId) {
         updatedRegistration.payment_method_id = parseInt(updatedPaymentMethodId);
         
         // Update payment method name for display in success message
@@ -237,7 +237,7 @@ export const PaymentVerification = () => {
       }
       
       // Add info about payment method updates
-      if (showPaymentMethodField && updatedPaymentMethodId && updatedPaymentMethodId !== "no_change") {
+      if (showPaymentMethodField && updatedPaymentMethodId) {
         const methodName = paymentMethods?.find(m => m.id.toString() === updatedPaymentMethodId)?.name || 'selected method';
         baseMessage += ` Payment method updated to ${methodName}.`;
       }
@@ -480,7 +480,7 @@ export const PaymentVerification = () => {
                               <SelectValue placeholder="Select payment method" />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="no_change">No change</SelectItem>
+                              <SelectItem value="">No change</SelectItem>
                               {paymentMethods?.map(method => (
                                 <SelectItem key={method.id} value={method.id.toString()}>
                                   {method.name} {!method.active && "(Inactive)"}

@@ -59,6 +59,10 @@ export const BatchPaymentVerification = () => {
   const [paymentStatus, setPaymentStatus] = useState<string>("confirmed");
   const [paymentNotes, setPaymentNotes] = useState<string>("");
   const [sendEmail, setSendEmail] = useState<boolean>(true);
+  const [batchPaymentMethodId, setBatchPaymentMethodId] = useState<string>("");
+  const [batchReferenceNumber, setBatchReferenceNumber] = useState<string>("");
+  const [showPaymentMethodField, setShowPaymentMethodField] = useState<boolean>(false);
+  const [showReferenceField, setShowReferenceField] = useState<boolean>(false);
   
   // Filter options
   const [paymentMethodFilter, setPaymentMethodFilter] = useState<string>("all");
@@ -111,14 +115,13 @@ export const BatchPaymentVerification = () => {
     },
   });
 
-  // Fetch payment methods for dropdown
+  // Fetch all payment methods for dropdown, including non-active ones
   const { data: paymentMethods } = useQuery({
-    queryKey: ['payment-methods'],
+    queryKey: ['all-payment-methods'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('payment_methods')
-        .select('id, name, account_number, account_type')
-        .eq('active', true)
+        .select('id, name, account_number, account_type, active')
         .order('name');
 
       if (error) {
@@ -203,6 +206,15 @@ export const BatchPaymentVerification = () => {
       return;
     }
     
+    // Reset the form fields when opening the dialog
+    setPaymentStatus("confirmed");
+    setPaymentNotes("");
+    setShowPaymentMethodField(false);
+    setShowReferenceField(false);
+    setBatchPaymentMethodId("");
+    setBatchReferenceNumber("");
+    setSendEmail(true);
+    
     setIsDialogOpen(true);
   };
   
@@ -239,8 +251,50 @@ export const BatchPaymentVerification = () => {
         // Update each registration with history tracking
         await Promise.all(batchRegistrations.map(async (registration) => {
           try {
+            // Prepare updated registration data
+            let updatedRegistration = { ...registration };              // Apply payment method update if selected
+            if (showPaymentMethodField && batchPaymentMethodId && batchPaymentMethodId !== "no_change") {
+              updatedRegistration.payment_method_id = parseInt(batchPaymentMethodId);
+              
+              // Update payment method name for display in success message
+              const selectedMethod = paymentMethods?.find(m => m.id.toString() === batchPaymentMethodId);
+              if (selectedMethod) {
+                updatedRegistration.payment_method_name = selectedMethod.name;
+              }
+            }
+            
+            // Apply reference number update if selected
+            if (showReferenceField && batchReferenceNumber.trim()) {
+              updatedRegistration.payment_reference_number = batchReferenceNumber.trim();
+            }
+            
+            // First update the payment method and reference if needed
+            if ((showPaymentMethodField && batchPaymentMethodId) || 
+                (showReferenceField && batchReferenceNumber.trim())) {
+              const updateData: any = {};
+              
+              if (showPaymentMethodField && batchPaymentMethodId && batchPaymentMethodId !== "no_change") {
+                updateData.payment_method_id = parseInt(batchPaymentMethodId);
+              }
+              
+              if (showReferenceField && batchReferenceNumber.trim()) {
+                updateData.payment_reference_number = batchReferenceNumber.trim();
+              }
+              
+              const { error: updateError } = await supabase
+                .from('registrations')
+                .update(updateData)
+                .eq('id', registration.id);
+                
+              if (updateError) {
+                console.error(`Error updating payment details for ${registration.registration_id}:`, updateError);
+                throw updateError;
+              }
+            }
+            
+            // Then update the payment status
             const { success, error, receiptNumber } = await updatePaymentStatus(
-              registration,
+              updatedRegistration,
               paymentStatus as 'confirmed' | 'rejected' | 'pending',
               paymentNotes || null,
               "admin", // This could be dynamically set to the logged-in admin
@@ -261,15 +315,39 @@ export const BatchPaymentVerification = () => {
         }));
       }
       
+      // Prepare toast message
+      let toastMessage = `Successfully updated ${successCount} registrations to ${paymentStatus}.`;
+      
+      // Add information about payment method updates
+      if (showPaymentMethodField && batchPaymentMethodId && batchPaymentMethodId !== "no_change") {
+        const methodName = paymentMethods?.find(m => m.id.toString() === batchPaymentMethodId)?.name || 'selected method';
+        toastMessage += ` Updated payment method to ${methodName}.`;
+      }
+      
+      // Add information about reference updates
+      if (showReferenceField && batchReferenceNumber.trim()) {
+        toastMessage += ` Updated reference numbers.`;
+      }
+      
+      // Add information about failures and receipts
+      if (failCount > 0) {
+        toastMessage += ` ${failCount} failed.`;
+      }
+      if (receiptCount > 0) {
+        toastMessage += ` ${receiptCount} receipts generated.`;
+      }
+      
       // Show completion toast
       toast({
         title: "Batch Update Complete",
-        description: `Successfully updated ${successCount} registrations to ${paymentStatus}.${
-          failCount > 0 ? ` ${failCount} failed.` : ''
-        }${
-          receiptCount > 0 ? ` ${receiptCount} receipts generated.` : ''
-        }`,
+        description: toastMessage,
       });
+      
+      // Reset form fields
+      setShowPaymentMethodField(false);
+      setShowReferenceField(false);
+      setBatchPaymentMethodId("");
+      setBatchReferenceNumber("");
       
       // Refetch data to update the UI
       queryClient.invalidateQueries({ queryKey: ['pending-payments'] });
@@ -471,7 +549,18 @@ export const BatchPaymentVerification = () => {
       </Card>
       
       {/* Batch Verification Dialog */}
-      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+      <Dialog 
+        open={isDialogOpen} 
+        onOpenChange={(open) => {
+          if (!open && !isUpdating) {
+            // Reset form when closing the dialog (if not actively updating)
+            setShowPaymentMethodField(false);
+            setShowReferenceField(false);
+            setBatchPaymentMethodId("");
+            setBatchReferenceNumber("");
+          }
+          setIsDialogOpen(open);
+        }}>
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle>Batch Verify Payments</DialogTitle>
@@ -493,6 +582,71 @@ export const BatchPaymentVerification = () => {
                   <SelectItem value="pending">Pending</SelectItem>
                 </SelectContent>
               </Select>
+            </div>
+            
+            {/* Payment Method Update Option */}
+            <div className="space-y-2">
+              <div className="flex items-center space-x-2">
+                <Checkbox 
+                  id="update-payment-method" 
+                  checked={showPaymentMethodField}
+                  onCheckedChange={(checked) => setShowPaymentMethodField(checked === true)}
+                />
+                <Label 
+                  htmlFor="update-payment-method" 
+                  className="text-sm cursor-pointer"
+                >
+                  Update payment method
+                </Label>
+              </div>
+              
+              {showPaymentMethodField && (
+                <div className="pt-2">
+                  <Label htmlFor="batch-payment-method">Payment Method</Label>
+                  <Select value={batchPaymentMethodId} onValueChange={setBatchPaymentMethodId}>
+                    <SelectTrigger id="batch-payment-method" className="w-full">
+                      <SelectValue placeholder="Select payment method" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="no_change">No change</SelectItem>
+                      {paymentMethods?.map(method => (
+                        <SelectItem key={method.id} value={method.id.toString()}>
+                          {method.name} {!method.active && "(Inactive)"}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+            </div>
+            
+            {/* Payment Reference Update Option */}
+            <div className="space-y-2">
+              <div className="flex items-center space-x-2">
+                <Checkbox 
+                  id="update-reference-number" 
+                  checked={showReferenceField}
+                  onCheckedChange={(checked) => setShowReferenceField(checked === true)}
+                />
+                <Label 
+                  htmlFor="update-reference-number" 
+                  className="text-sm cursor-pointer"
+                >
+                  Update payment reference number
+                </Label>
+              </div>
+              
+              {showReferenceField && (
+                <div className="pt-2">
+                  <Label htmlFor="batch-reference-number">Reference Number</Label>
+                  <Input
+                    id="batch-reference-number"
+                    placeholder="Enter payment reference number" 
+                    value={batchReferenceNumber}
+                    onChange={(e) => setBatchReferenceNumber(e.target.value)}
+                  />
+                </div>
+              )}
             </div>
             
             <div>
@@ -525,7 +679,20 @@ export const BatchPaymentVerification = () => {
           </div>
           
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsDialogOpen(false)} disabled={isUpdating}>
+            <Button 
+              variant="outline" 
+              onClick={() => {
+                setIsDialogOpen(false);
+                // Don't reset during update
+                if (!isUpdating) {
+                  setShowPaymentMethodField(false);
+                  setShowReferenceField(false);
+                  setBatchPaymentMethodId("");
+                  setBatchReferenceNumber("");
+                }
+              }} 
+              disabled={isUpdating}
+            >
               Cancel
             </Button>
             <Button 

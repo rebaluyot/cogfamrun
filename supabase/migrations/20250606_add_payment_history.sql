@@ -59,3 +59,5 @@ CREATE POLICY user_read_own_receipts ON payment_receipts
 -- Add index for faster receipt lookup
 CREATE INDEX idx_payment_receipts_registration_id ON payment_receipts(registration_id);
 CREATE INDEX idx_payment_receipts_receipt_number ON payment_receipts(receipt_number);
+
+
