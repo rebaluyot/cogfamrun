@@ -405,14 +405,9 @@ export const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({ registrationId
       </Card>
 
       <div className="text-center flex flex-col sm:flex-row justify-center items-center gap-2 sm:space-y-0">
-        <Link to="/dashboard" className="w-full sm:w-auto">
+        <Link to="/" className="w-full sm:w-auto">
           <Button variant="outline" className="w-full sm:w-auto text-xs sm:text-sm py-1 px-3 sm:py-2">
-            View Dashboard
-          </Button>
-        </Link>
-        <Link to="/registration" className="w-full sm:w-auto">
-          <Button variant="outline" className="w-full sm:w-auto text-xs sm:text-sm py-1 px-3 sm:py-2">
-            Register Another Participant
+            View Home
           </Button>
         </Link>
       </div>

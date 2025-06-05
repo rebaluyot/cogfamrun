@@ -499,31 +499,13 @@ const Registration = () => {
         });
         return;
       }      // Send confirmation email
-      /*
-      try {
-        await emailjs.send(
-          "service_i6px4qb", // Replace with your EmailJS service ID
-          "template_1zf9bgr", // Replace with your EmailJS template ID
-          {
-            to_email: formData.email,
-            to_name: `${formData.firstName} ${formData.lastName}`,
-            registration_id: id,
-            category: formData.category,
-            shirt_size: formData.shirtSize,
-            amount: formatCurrency(price),
-          }
-        );
-      } catch (emailError) {
-        console.error('Error sending confirmation email:', emailError);
-        // Don't block registration if email fails
-      }
-      */
+      
       setRegistrationId(id);
       setShowQR(true);
 
       toast({
         title: "Registration Successful!",
-        description: `Your registration ID is ${id}. A confirmation email has been sent to ${formData.email}`,
+        description: `Your registration ID is ${id}.`,
       });
 
     } catch (error) {
