@@ -166,34 +166,46 @@ export const BatchPaymentVerification = () => {
 
   // Toggle individual registration selection
   const toggleRegistrationSelection = (id: string) => {
-    const newSelection = new Set(selectedRegistrations);
-    if (newSelection.has(id)) {
-      newSelection.delete(id);
-    } else {
-      newSelection.add(id);
-    }
-    setSelectedRegistrations(newSelection);
+    setSelectedRegistrations(prevSelection => {
+      const newSelection = new Set(prevSelection);
+      if (newSelection.has(id)) {
+        newSelection.delete(id);
+      } else {
+        newSelection.add(id);
+      }
+      return newSelection;
+    });
   };
   
   // Toggle all registrations selection
   useEffect(() => {
-    if (selectAll && filteredRegistrations) {
-      const allIds = new Set(filteredRegistrations.map(reg => reg.id));
-      setSelectedRegistrations(allIds);
-    } else if (!selectAll) {
-      setSelectedRegistrations(new Set());
-    }
-  }, [selectAll, filteredRegistrations]);
-  
-  // Update selectAll state when individual selections change
-  useEffect(() => {
-    if (filteredRegistrations && filteredRegistrations.length > 0) {
-      const allSelected = filteredRegistrations.every(reg => selectedRegistrations.has(reg.id));
-      if (allSelected !== selectAll) {
-        setSelectAll(allSelected);
+    if (filteredRegistrations) {
+      if (selectAll) {
+        const allIds = new Set(filteredRegistrations.map(reg => reg.id));
+        setSelectedRegistrations(allIds);
+      } else {
+        // Only clear if we're explicitly deselecting all
+        // This prevents clearing when toggling individual checkboxes
+        setSelectedRegistrations(new Set());
       }
     }
-  }, [selectedRegistrations, filteredRegistrations]);
+  }, [selectAll]);
+  
+  // Update selectAll state when individual selections change
+  // This effect has been modified to prevent circular updates
+  useEffect(() => {
+    if (filteredRegistrations && filteredRegistrations.length > 0) {
+      // Only update when we have an explicit action that would cause "all" to be selected
+      // Don't automatically check "selectAll" for other interactions
+      if (selectedRegistrations.size === filteredRegistrations.length && !selectAll) {
+        // Every item is selected but selectAll is false
+        setSelectAll(true);
+      } else if (selectedRegistrations.size === 0 && selectAll) {
+        // No items selected but selectAll is true
+        setSelectAll(false);
+      }
+    }
+  }, [selectedRegistrations]);
   
   // Open confirmation dialog for batch verification
   const handleBatchVerify = () => {
@@ -452,11 +464,14 @@ export const BatchPaymentVerification = () => {
             <div className="flex justify-between items-center">
               <div className="flex items-center space-x-2">
                 <Checkbox 
-                  id="select-all" 
+                  id="select-all-checkbox" 
                   checked={selectAll} 
-                  onCheckedChange={() => setSelectAll(!selectAll)}
+                  // Use a callback form to ensure we're working with the latest state
+                  onCheckedChange={(checked) => {
+                    setSelectAll(checked === true);
+                  }}
                 />
-                <label htmlFor="select-all" className="text-sm font-medium cursor-pointer">
+                <label htmlFor="select-all-checkbox" className="text-sm font-medium cursor-pointer">
                   {selectAll ? "Deselect All" : "Select All"}
                 </label>
                 <span className="text-xs text-muted-foreground ml-2">
@@ -507,6 +522,7 @@ export const BatchPaymentVerification = () => {
                       <TableRow key={registration.id}>
                         <TableCell>
                           <Checkbox 
+                            id={`checkbox-${registration.id}`}
                             checked={selectedRegistrations.has(registration.id)}
                             onCheckedChange={() => toggleRegistrationSelection(registration.id)}
                           />
