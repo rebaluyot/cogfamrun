@@ -7,6 +7,7 @@ import { formatCurrency, getCategoryColorClass } from "@/lib/format-utils";
 import QRCode from "react-qr-code";
 import QRCodeNode from "qrcode";
 import emailjs from '@emailjs/browser';
+import { initializeEmailJS, sendEmailWithEmailJS } from "@/lib/emailjs-utils";
 import { useToast } from "@/hooks/use-toast";
 
 interface QRCodeGeneratorProps {
@@ -28,6 +29,7 @@ export const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({ registrationId
   
   const generateQRImage = async (): Promise<string> => {
     try {
+      
       // Generate QR code as data URL
       const qrDataUrl = await QRCodeNode.toDataURL(qrData, {
         width: 400,
@@ -53,6 +55,7 @@ export const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({ registrationId
       // Convert data URL to base64
       // const base64Data = qrDataUrl.split(',')[1];
 
+      /*
       // Initialize EmailJS
       emailjs.init("vc8LzDacZcreqI6fN");
 
@@ -70,12 +73,34 @@ export const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({ registrationId
           qr_code_image: qrDataUrl,
         }
       );
+      */
+      const initialized = await initializeEmailJS();
+      
+      if (!initialized) {
+        throw new Error("Failed to initialize EmailJS. Check your settings in the Admin panel.");
+      }
+
+
+     const result = await sendEmailWithEmailJS({
+             to_email: email,
+             participant_name: participantName,
+             registration_id: registrationId,
+             category: category,
+             price: formatCurrency(price),
+             shirt_size: shirtSize,
+             qr_code_image: qrDataUrl,
+      });
+
+      if (!result.success) {
+        throw new Error(result.error || "Failed to send email");
+      }
 
       setQrGenerated(true);
       toast({
         title: "Success!",
         description: "QR code has been sent to your email.",
       });
+      
     } catch (error) {
       console.error("Error sending email:", error);
       toast({

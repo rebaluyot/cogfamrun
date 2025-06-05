@@ -11,6 +11,7 @@ import { BulkRegistrationUpload } from "@/components/admin/BulkRegistrationUploa
 import { PaymentMethodManagement } from "@/components/admin/PaymentMethodManagement";
 import { PaymentVerification } from "@/components/admin/PaymentVerification";
 import { BatchPaymentVerification } from "@/components/admin/BatchPaymentVerification";
+import { EmailJSSettings } from "@/components/admin/EmailJSSettings";
 
 const Admin = () => {
   return (
@@ -45,6 +46,9 @@ const Admin = () => {
           </TabsTrigger>
           <TabsTrigger value="bulk-upload" className="flex-1 data-[state=active]:bg-background">
             Bulk Upload
+          </TabsTrigger>
+          <TabsTrigger value="settings" className="flex-1 data-[state=active]:bg-background">
+            Settings
           </TabsTrigger>
         </TabsList>
 
@@ -91,6 +95,18 @@ const Admin = () => {
               <BatchPaymentVerification />
             </TabsContent>
           </Tabs>
+        </TabsContent>
+        
+        <TabsContent value="settings">
+          <Card>
+            <CardHeader>
+              <CardTitle>System Settings</CardTitle>
+              <CardDescription>Manage global configuration settings for the application</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <EmailJSSettings />
+            </CardContent>
+          </Card>
         </TabsContent>
       </Tabs>
     </div>

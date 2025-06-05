@@ -18,8 +18,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import * as XLSX from 'xlsx';
-import emailjs from '@emailjs/browser';
 import QRCodeNode from "qrcode";
+import { initializeEmailJS, sendEmailWithEmailJS } from "@/lib/emailjs-utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 
@@ -206,8 +206,12 @@ export const ReportsManagement = () => {
   const generateQRCode = async (registration: any) => {
     setSendingQRCode(registration.id);
     try {
-      // Initialize EmailJS
-      emailjs.init("vc8LzDacZcreqI6fN");
+      // Initialize EmailJS with settings from the database
+      const initialized = await initializeEmailJS();
+      
+      if (!initialized) {
+        throw new Error("Failed to initialize EmailJS. Check your settings in the Admin panel.");
+      }
 
       // Prepare QR data
       const qrData = `CogFamRun2025|${registration.id}|${registration.name}|${registration.category}|${registration.fee}|${registration.shirtSize}`;
@@ -222,23 +226,20 @@ export const ReportsManagement = () => {
         },
       });
 
-      // Convert data URL to base64
-      //const base64Data = qrDataUrl.split(',')[1];
+      // Send email with QR code using our utility function
+      const result = await sendEmailWithEmailJS({
+        to_email: registration.email,
+        participant_name: registration.name,
+        registration_id: registration.id,
+        category: registration.category,
+        price: formatCurrency(registration.fee),
+        shirt_size: registration.shirtSize,
+        qr_code_image: qrDataUrl,
+      });
 
-      // Send email with QR code
-      await emailjs.send(
-        "service_i6px4qb",
-        "template_1zf9bgr",
-        {
-          to_email: registration.email,
-          participant_name: registration.name,
-          registration_id: registration.id,
-          category: registration.category,
-          price: formatCurrency(registration.fee),
-          shirt_size: registration.shirtSize,
-          qr_code_image: qrDataUrl,
-        }
-      );
+      if (!result.success) {
+        throw new Error(result.error || "Failed to send email");
+      }
 
       toast({
         title: "QR Code Sent",
@@ -248,7 +249,7 @@ export const ReportsManagement = () => {
       console.error("Error sending QR code:", error);
       toast({
         title: "Error",
-        description: "Failed to send QR code. Please try again.",
+        description: error instanceof Error ? error.message : "Failed to send QR code. Please try again.",
         variant: "destructive",
       });
     } finally {
