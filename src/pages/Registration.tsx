@@ -79,16 +79,6 @@ const formatPhoneNumber = (phone: string): string => {
   return cleaned;
 };
 
-
-interface ValidationErrors {
-  firstName?: string;
-  lastName?: string;
-  email?: string;
-  phone?: string;
-  emergencyContact?: string;
-  emergencyPhone?: string;
-}
-
 // Initialize EmailJS with your public key
 // emailjs.init("vc8LzDacZcreqI6fN"); // Replace with your actual EmailJS public key
 
@@ -99,6 +89,7 @@ interface ValidationErrors {
   phone?: string;
   emergencyContact?: string;
   emergencyPhone?: string;
+  disclaimerAccepted?: string;
 }
 
 const Registration = () => {
@@ -134,6 +125,7 @@ const Registration = () => {
   const [paymentReferenceNumber, setPaymentReferenceNumber] = useState("");
   const [touchedFields, setTouchedFields] = useState<Record<string, boolean>>({});
   const [showErrorSummary, setShowErrorSummary] = useState(false);
+  const [disclaimerAccepted, setDisclaimerAccepted] = useState(false);
 
   // URL search parameter handling
   const [searchParams] = useSearchParams();
@@ -171,6 +163,7 @@ const Registration = () => {
       setPaymentReferenceNumber("");
       setTouchedFields({});
       setShowErrorSummary(false);
+      setDisclaimerAccepted(false);
       
       // Remove query parameter to prevent repeated resets
       if (window.history.replaceState) {
@@ -228,6 +221,9 @@ const Registration = () => {
     if (formData.isChurchAttendee && !formData.ministry) errorMessages.push("Ministry is required");
     // Cluster is now optional, so we don't check for it
     
+    // Check for disclaimer acceptance
+    if (!disclaimerAccepted) errorMessages.push("You must accept the terms and disclaimer to register");
+    
     return errorMessages;
   };
 
@@ -251,6 +247,7 @@ const Registration = () => {
     else if (errorMessage.includes('Shirt Size')) fieldId = 'shirtSize';
     else if (errorMessage.includes('Department')) fieldId = 'department';
     else if (errorMessage.includes('Ministry')) fieldId = 'ministry';
+    else if (errorMessage.includes('disclaimer') || errorMessage.includes('terms')) fieldId = 'disclaimerAccepted';
     // Cluster navigation removed since it's now optional
     
     if (fieldId) {
@@ -323,7 +320,12 @@ const Registration = () => {
       ))
     );
     
-    // Form is valid if there are no error messages and other required fields are filled
+    // Check disclaimer acceptance
+    if (!disclaimerAccepted) {
+      newErrors.disclaimerAccepted = "You must accept the terms and disclaimer to register";
+    }
+    
+    // Form is valid if there are no error messages, other required fields are filled
     return !Object.values(newErrors).some(error => error !== undefined) && otherRequiredFieldsValid;
   };
 
@@ -459,6 +461,22 @@ const Registration = () => {
         });
         return;
       }
+      
+      if (!disclaimerAccepted) {
+        toast({
+          title: "Disclaimer Agreement Required",
+          description: "Please read and accept the disclaimer and terms to continue.",
+          variant: "destructive",
+        });
+        setShowErrorSummary(true);
+        // Scroll to the disclaimer section
+        const element = document.getElementById("disclaimerAccepted");
+        if (element) {
+          element.focus();
+          element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+        return;
+      }
 
       // Validate form fields
       const isValid = validateForm();
@@ -529,6 +547,9 @@ const Registration = () => {
         payment_reference_number: paymentReferenceNumber || null,
         payment_status: 'pending',
         payment_date: new Date().toISOString(),
+        // Store disclaimer acceptance
+        disclaimer_accepted: disclaimerAccepted,
+        disclaimer_accepted_date: new Date().toISOString(),
       };
 
       // Insert into database
@@ -1207,6 +1228,64 @@ const Registration = () => {
                     </div>
                   </div>
                 </div>
+                
+                {/* Disclaimer and Terms */}
+                <div className="mt-4 sm:mt-6 p-4 bg-gray-50 rounded-lg border">
+                  <h3 className="text-base sm:text-lg font-semibold mb-2">Disclaimer & Terms</h3>
+                  <div className="text-xs max-h-48 overflow-y-auto bg-white p-4 border rounded mb-3 space-y-2" style={{ fontSize: '0.5rem' }}>
+                    <p className="font-medium text-center text-blue-700" style={{ fontSize: '0.7rem' }}>COG FamRun 2025 Terms and Disclaimer</p>
+                    
+                    <p>By completing and submitting this registration form, I hereby confirm that I am voluntarily joining the COG FamRun 2025 organized by the Church of God.</p>
+                    
+                    <p className="font-medium">I understand and agree to the following:</p>
+                    
+                    <div>
+                      <p className="font-semibold text-blue-700" style={{ fontSize: '0.65rem' }}>Participation Risks:</p>
+                      <p>I acknowledge that participating in a fun run involves physical exertion and may carry risks such as injury, dehydration, or other health concerns. I affirm that I am physically fit and capable of participating in this activity. I waive all claims against the organizers, volunteers, sponsors, and any affiliated parties for any injury, illness, or loss that may occur before, during, or after the event.</p>
+                    </div>
+                    
+                    <div>
+                      <p className="font-semibold text-blue-700" style={{ fontSize: '0.65rem' }}>Safety & Conduct:</p>
+                      <p>I agree to follow all safety protocols and guidelines set by the event organizers. I understand that any form of misconduct, disruption, or failure to comply may result in disqualification or removal from the event.</p>
+                    </div>
+                    
+                    <div>
+                      <p className="font-semibold text-blue-700" style={{ fontSize: '0.65rem' }}>Media and Publicity:</p>
+                      <p>I grant permission for my image, name, voice, or likeness to be recorded, photographed, or filmed during the event and used for legitimate promotional, documentary, or communication purposes related to COG FamRun without compensation.</p>
+                    </div>
+                    
+                    <div>
+                      <p className="font-semibold text-blue-700" style={{ fontSize: '0.65rem' }}>Data Privacy (RA 10173 – Data Privacy Act of 2012):</p>
+                      <p>I voluntarily provide my personal information to the Church of God and authorize its collection, use, and processing strictly for registration, communication, coordination, and documentation purposes related to the COG FamRun 2025.</p>
+                      
+                      <ul className="list-disc pl-5 mt-1 space-y-1">
+                        <li>My data will be handled with utmost confidentiality.</li>
+                        <li>It will not be shared with unauthorized third parties without my consent.</li>
+                        <li>I have the right to access, correct, or withdraw my personal data at any time by contacting the event organizers.</li>
+                      </ul>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-start space-x-2">
+                    <Checkbox 
+                      id="disclaimerAccepted"
+                      checked={disclaimerAccepted} 
+                      onCheckedChange={(checked: boolean) => setDisclaimerAccepted(checked)}
+                      className={!disclaimerAccepted && showErrorSummary ? "border-red-500" : ""}
+                    />
+                    <div>
+                      <Label 
+                        htmlFor="disclaimerAccepted" 
+                        className="text-sm sm:text-base font-medium cursor-pointer"
+                      >
+                        I have read, understood, and agree to the terms above <span className="text-red-500">*</span>
+                      </Label>
+                      {!disclaimerAccepted && showErrorSummary && (
+                        <p className="text-red-500 text-xs mt-1">You must accept the terms to register</p>
+                      )}
+                    </div>
+                  </div>
+                </div>
 
                 <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mt-4 sm:mt-6">
                   <Button 
@@ -1221,7 +1300,7 @@ const Registration = () => {
                   <Button 
                     type="submit" 
                     className="flex-1 bg-gradient-to-r from-blue-600 via-red-500 to-yellow-500 hover:from-blue-700 hover:via-red-600 hover:to-yellow-600 text-white py-4 sm:py-6 text-lg sm:text-xl font-bold tracking-wide"
-                    disabled={isSubmitting || isUploading || !paymentProof}
+                    disabled={isSubmitting || isUploading || !paymentProof || !disclaimerAccepted}
                   >
                     {isSubmitting || isUploading ? (
                       <span className="flex items-center gap-2 justify-center">
