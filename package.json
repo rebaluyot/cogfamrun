@@ -14,7 +14,9 @@
     "payment:setup": "node scripts/setup-payment-system.mjs",
     "payment:test": "node scripts/e2e-payment-test.mjs",
     "payment:diagnose": "node scripts/payment-system-diagnostic.mjs",
-    "payment:fix-storage": "node scripts/fix-payment-storage.mjs"
+    "payment:fix-storage": "node scripts/fix-payment-storage.mjs",
+    "migrate-payment-history": "node scripts/apply-migration.mjs supabase/migrations/20250606_add_payment_history.sql",
+    "test-payment-history": "node scripts/test-receipt-history.mjs"
   },
   "dependencies": {
     "@emailjs/browser": "^3.12.1",

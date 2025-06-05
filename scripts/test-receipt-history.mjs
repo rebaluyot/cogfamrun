@@ -1,0 +1,201 @@
+/**
+ * Payment Receipt and History Test Script
+ * 
+ * This script tests the new payment receipt and history tracking functionality
+ * Run with: node scripts/test-receipt-history.mjs
+ */
+import { createClient } from '@supabase/supabase-js';
+import dotenv from 'dotenv';
+import { v4 as uuidv4 } from 'uuid';
+
+// Load environment variables
+dotenv.config();
+
+// Initialize Supabase client
+const supabaseUrl = process.env.SUPABASE_URL;
+const supabaseKey = process.env.SUPABASE_SERVICE_KEY;
+
+if (!supabaseUrl || !supabaseKey) {
+  console.error('Missing Supabase credentials. Set SUPABASE_URL and SUPABASE_SERVICE_KEY environment variables.');
+  process.exit(1);
+}
+
+const supabase = createClient(supabaseUrl, supabaseKey);
+
+/**
+ * Generate a unique receipt number
+ */
+const generateReceiptNumber = () => {
+  const year = new Date().getFullYear();
+  const randomPart = uuidv4().substring(0, 8).toUpperCase();
+  return `FR-${year}-${randomPart}`;
+};
+
+/**
+ * Test payment history tracking
+ */
+async function testPaymentHistory() {
+  console.log('\n--- Testing Payment History ---');
+  
+  try {
+    // Get a test registration
+    const { data: registrations, error: regError } = await supabase
+      .from('registrations')
+      .select('id, registration_id, payment_status')
+      .eq('payment_status', 'pending')
+      .limit(1);
+      
+    if (regError) throw regError;
+    if (!registrations || registrations.length === 0) {
+      console.log('No pending registrations found for testing');
+      return;
+    }
+    
+    const testReg = registrations[0];
+    console.log(`Using registration ID: ${testReg.registration_id}`);
+    
+    // Log a history entry
+    console.log('Creating payment history entry...');
+    const { error: historyError } = await supabase
+      .from('payment_history')
+      .insert({
+        registration_id: testReg.id,
+        payment_status: 'confirmed',
+        previous_status: testReg.payment_status,
+        changed_by: 'test-script',
+        notes: 'Test history entry from script'
+      });
+      
+    if (historyError) throw historyError;
+    
+    // Verify it was created
+    const { data: history, error: fetchError } = await supabase
+      .from('payment_history')
+      .select('*')
+      .eq('registration_id', testReg.id)
+      .order('created_at', { ascending: false })
+      .limit(1);
+      
+    if (fetchError) throw fetchError;
+    
+    if (history && history.length > 0) {
+      console.log('✅ Successfully created and retrieved history entry:');
+      console.log(`   - Previous status: ${history[0].previous_status}`);
+      console.log(`   - New status: ${history[0].payment_status}`);
+      console.log(`   - Changed by: ${history[0].changed_by}`);
+      console.log(`   - Notes: ${history[0].notes}`);
+      console.log(`   - Created at: ${new Date(history[0].created_at).toLocaleString()}`);
+    } else {
+      console.log('❌ Failed to retrieve history entry');
+    }
+  } catch (error) {
+    console.error('❌ Error testing payment history:', error);
+  }
+}
+
+/**
+ * Test receipt generation
+ */
+async function testReceiptGeneration() {
+  console.log('\n--- Testing Receipt Generation ---');
+  
+  try {
+    // Get a test registration with confirmed payment
+    const { data: registrations, error: regError } = await supabase
+      .from('registrations')
+      .select('id, registration_id, payment_status')
+      .eq('payment_status', 'confirmed')
+      .limit(1);
+      
+    if (regError) throw regError;
+    if (!registrations || registrations.length === 0) {
+      console.log('No confirmed registrations found for testing');
+      return;
+    }
+    
+    const testReg = registrations[0];
+    console.log(`Using registration ID: ${testReg.registration_id}`);
+    
+    // Check if receipt already exists
+    const { data: existingReceipt } = await supabase
+      .from('payment_receipts')
+      .select('receipt_number')
+      .eq('registration_id', testReg.id)
+      .single();
+    
+    if (existingReceipt) {
+      console.log(`✅ Receipt already exists with number: ${existingReceipt.receipt_number}`);
+      return;
+    }
+    
+    // Generate a receipt
+    console.log('Generating new receipt...');
+    const receiptNumber = generateReceiptNumber();
+    
+    const { error: receiptError } = await supabase
+      .from('payment_receipts')
+      .insert({
+        registration_id: testReg.id,
+        receipt_number: receiptNumber,
+        generated_by: 'test-script'
+      });
+      
+    if (receiptError) throw receiptError;
+    
+    // Verify it was created
+    const { data: receipt, error: fetchError } = await supabase
+      .from('payment_receipts')
+      .select('*')
+      .eq('registration_id', testReg.id)
+      .single();
+      
+    if (fetchError) throw fetchError;
+    
+    if (receipt) {
+      console.log('✅ Successfully created and retrieved receipt:');
+      console.log(`   - Receipt number: ${receipt.receipt_number}`);
+      console.log(`   - Generated by: ${receipt.generated_by}`);
+      console.log(`   - Generated at: ${new Date(receipt.generated_at).toLocaleString()}`);
+    } else {
+      console.log('❌ Failed to retrieve receipt');
+    }
+  } catch (error) {
+    console.error('❌ Error testing receipt generation:', error);
+  }
+}
+
+/**
+ * Main test function
+ */
+async function runTests() {
+  console.log('====================================');
+  console.log('PAYMENT RECEIPT & HISTORY TEST SCRIPT');
+  console.log('====================================');
+  
+  // Test database connection
+  try {
+    const { data, error } = await supabase.from('registrations').select('count(*)').single();
+    if (error) throw error;
+    console.log(`✅ Connected to database. Found ${data.count} registrations.`);
+  } catch (error) {
+    console.error('❌ Database connection failed:', error);
+    process.exit(1);
+  }
+  
+  // Run test for payment history
+  await testPaymentHistory();
+  
+  // Run test for receipt generation
+  await testReceiptGeneration();
+  
+  console.log('\n--- Testing Complete ---');
+}
+
+// Run the tests
+runTests()
+  .then(() => {
+    console.log('\nAll tests completed');
+  })
+  .catch(err => {
+    console.error('Test script error:', err);
+  });

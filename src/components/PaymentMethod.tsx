@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { 
   Sheet, 
@@ -15,11 +15,34 @@ import { Loader2 } from "lucide-react";
 
 interface PaymentMethodProps {
   amount: number;
+  onMethodSelect?: (methodId: number) => void;
+  onReferenceInput?: (reference: string) => void;
+  defaultMethodId?: number;
 }
 
-export const PaymentMethod = ({ amount }: PaymentMethodProps) => {
-  const [selectedAccount, setSelectedAccount] = useState("");
+export const PaymentMethod = ({ 
+  amount, 
+  onMethodSelect,
+  onReferenceInput,
+  defaultMethodId 
+}: PaymentMethodProps) => {
+  const [selectedAccount, setSelectedAccount] = useState(defaultMethodId ? String(defaultMethodId) : "");
+  const [referenceNumber, setReferenceNumber] = useState("");
   const { data: paymentMethods, isLoading, error } = usePaymentMethods();
+  
+  // Notify parent component when selected method changes
+  useEffect(() => {
+    if (selectedAccount && onMethodSelect) {
+      onMethodSelect(Number(selectedAccount));
+    }
+  }, [selectedAccount, onMethodSelect]);
+  
+  // Notify parent component when reference number changes
+  useEffect(() => {
+    if (referenceNumber && onReferenceInput) {
+      onReferenceInput(referenceNumber);
+    }
+  }, [referenceNumber, onReferenceInput]);
   
   // Show loading state if data is being fetched
   if (isLoading) {
@@ -112,6 +135,41 @@ export const PaymentMethod = ({ amount }: PaymentMethodProps) => {
                         <p>3. Enter the exact amount: ₱{amount.toLocaleString()}</p>
                         <p>4. Take a screenshot of your payment confirmation</p>
                         <p>5. Upload the screenshot below</p>
+                      </div>
+                      
+                      <div className="mt-4">
+                        <label htmlFor="reference-number" className="block text-sm font-medium text-gray-700 mb-1">
+                          Payment Reference Number <span className="text-red-500">*</span>
+                        </label>
+                        <div className="relative">
+                          <input
+                            type="text"
+                            id="reference-number"
+                            placeholder="Enter transaction/reference number"
+                            className={`w-full p-2 border rounded-md ${
+                              referenceNumber.length < 5 && referenceNumber.length > 0
+                                ? 'border-red-300 focus:ring-red-500 focus:border-red-500'
+                                : referenceNumber.length >= 5
+                                ? 'border-green-300 focus:ring-green-500 focus:border-green-500'
+                                : ''
+                            }`}
+                            value={referenceNumber}
+                            onChange={(e) => setReferenceNumber(e.target.value)}
+                            required
+                          />
+                          {referenceNumber.length >= 5 && (
+                            <span className="absolute right-3 top-2.5 text-green-500 text-sm">✓</span>
+                          )}
+                        </div>
+                        {referenceNumber.length < 5 && referenceNumber.length > 0 ? (
+                          <p className="text-xs text-red-500 mt-1">
+                            Reference number must be at least 5 characters
+                          </p>
+                        ) : (
+                          <p className="text-xs text-gray-500 mt-1">
+                            Please enter the reference/transaction number from your payment receipt
+                          </p>
+                        )}
                       </div>
                     </div>
                   )}

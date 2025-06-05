@@ -183,6 +183,12 @@ export type Database = {
           last_name: string
           medical_conditions: string | null
           ministry: string | null
+          payment_confirmed_by: string | null
+          payment_date: string | null
+          payment_method_id: number | null
+          payment_notes: string | null
+          payment_reference_number: string | null
+          payment_status: string | null
           phone: string | null
           price: number
           registration_id: string
@@ -205,6 +211,12 @@ export type Database = {
           last_name: string
           medical_conditions?: string | null
           ministry?: string | null
+          payment_confirmed_by?: string | null
+          payment_date?: string | null
+          payment_method_id?: number | null
+          payment_notes?: string | null
+          payment_reference_number?: string | null
+          payment_status?: string | null
           phone?: string | null
           price: number
           registration_id: string
@@ -227,6 +239,12 @@ export type Database = {
           last_name?: string
           medical_conditions?: string | null
           ministry?: string | null
+          payment_confirmed_by?: string | null
+          payment_date?: string | null
+          payment_method_id?: number | null
+          payment_notes?: string | null
+          payment_reference_number?: string | null
+          payment_status?: string | null
           phone?: string | null
           price?: number
           registration_id?: string
@@ -262,7 +280,7 @@ export type Tables<
   }
     ? keyof (Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
         Database[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
-    : never = never,
+    : never,
 > = DefaultSchemaTableNameOrOptions extends { schema: keyof Database }
   ? (Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
       Database[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {

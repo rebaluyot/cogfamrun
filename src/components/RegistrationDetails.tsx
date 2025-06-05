@@ -28,6 +28,13 @@ interface Registration {
   status: string;
   created_at: string;
   payment_proof_url: string | null;
+  payment_reference_number: string | null;
+  payment_method_id: number | null;
+  payment_status: string | null;
+  payment_date: string | null;
+  payment_confirmed_by: string | null;
+  payment_notes: string | null;
+  payment_method_name?: string;
 }
 
 interface RegistrationDetailsProps {
@@ -217,6 +224,69 @@ export const RegistrationDetails = ({ registration, open, onOpenChange }: Regist
               </div>
             </>
           )}
+
+          {/* Payment Information */}
+          <Separator />
+          <div>
+            <h3 className="text-xs font-semibold mb-1">Payment Information</h3>
+            <dl className="space-y-1 text-sm">
+              <div className="flex gap-1">
+                <dt className="text-muted-foreground w-20 flex-shrink-0">Status:</dt>
+                <dd className="flex-1 min-w-0">
+                  <Badge className={`${
+                    registration.payment_status === 'confirmed' ? 'bg-green-100 text-green-800' :
+                    registration.payment_status === 'rejected' ? 'bg-red-100 text-red-800' :
+                    'bg-yellow-100 text-yellow-800'
+                  }`}>
+                    {(registration.payment_status || 'pending').toUpperCase()}
+                  </Badge>
+                </dd>
+              </div>
+              
+              <div className="flex gap-1">
+                <dt className="text-muted-foreground w-20 flex-shrink-0">Method:</dt>
+                <dd className="font-medium flex-1 min-w-0 truncate">
+                  {registration.payment_method_name || 'Not specified'}
+                </dd>
+              </div>
+              
+              {registration.payment_reference_number && (
+                <div className="flex gap-1">
+                  <dt className="text-muted-foreground w-20 flex-shrink-0">Reference #:</dt>
+                  <dd className="font-medium flex-1 min-w-0 truncate">
+                    {registration.payment_reference_number}
+                  </dd>
+                </div>
+              )}
+              
+              {registration.payment_date && (
+                <div className="flex gap-1">
+                  <dt className="text-muted-foreground w-20 flex-shrink-0">Date:</dt>
+                  <dd className="font-medium flex-1 min-w-0">
+                    {new Date(registration.payment_date).toLocaleString()}
+                  </dd>
+                </div>
+              )}
+              
+              {registration.payment_confirmed_by && (
+                <div className="flex gap-1">
+                  <dt className="text-muted-foreground w-20 flex-shrink-0">Verified by:</dt>
+                  <dd className="font-medium flex-1 min-w-0 truncate">
+                    {registration.payment_confirmed_by}
+                  </dd>
+                </div>
+              )}
+              
+              {registration.payment_notes && (
+                <div className="mt-1 pt-1 border-t">
+                  <dt className="text-muted-foreground text-xs mb-0.5">Notes:</dt>
+                  <dd className="text-xs bg-slate-50 p-1.5 rounded border">
+                    {registration.payment_notes}
+                  </dd>
+                </div>
+              )}
+            </dl>
+          </div>
         </div>
       </DialogContent>
     </Dialog>

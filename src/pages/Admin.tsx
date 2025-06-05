@@ -9,6 +9,7 @@ import { CategoryManagement } from "@/components/admin/CategoryManagement";
 import { ReportsManagement } from "@/components/admin/ReportsManagement";
 import { BulkRegistrationUpload } from "@/components/admin/BulkRegistrationUpload";
 import { PaymentMethodManagement } from "@/components/admin/PaymentMethodManagement";
+import { PaymentVerification } from "@/components/admin/PaymentVerification";
 
 const Admin = () => {
   return (
@@ -20,6 +21,9 @@ const Admin = () => {
 
       <Tabs defaultValue="categories" className="space-y-6">
         <TabsList className="bg-muted/50 p-1 w-full flex">
+          <TabsTrigger value="payments" className="flex-1 data-[state=active]:bg-background bg-yellow-50 data-[state=active]:bg-yellow-100 font-medium">
+            Payments
+          </TabsTrigger>
           <TabsTrigger value="categories" className="flex-1 data-[state=active]:bg-background">
             Categories
           </TabsTrigger>
@@ -69,6 +73,10 @@ const Admin = () => {
         
         <TabsContent value="payment-methods">
           <PaymentMethodManagement />
+        </TabsContent>
+        
+        <TabsContent value="payments">
+          <PaymentVerification />
         </TabsContent>
       </Tabs>
     </div>

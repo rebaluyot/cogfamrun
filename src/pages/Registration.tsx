@@ -129,6 +129,8 @@ const Registration = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [paymentProof, setPaymentProof] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [selectedPaymentMethodId, setSelectedPaymentMethodId] = useState<number | null>(null);
+  const [paymentReferenceNumber, setPaymentReferenceNumber] = useState("");
   const [touchedFields, setTouchedFields] = useState<Record<string, boolean>>({});
   const [showErrorSummary, setShowErrorSummary] = useState(false);
 
@@ -475,7 +477,12 @@ const Registration = () => {
         medical_conditions: formData.medicalConditions || null,
         shirt_size: formData.shirtSize,
         status: 'pending',
-        payment_proof_url: paymentProofUrl
+        payment_proof_url: paymentProofUrl,
+        // Payment tracking fields
+        payment_method_id: selectedPaymentMethodId,
+        payment_reference_number: paymentReferenceNumber || null,
+        payment_status: 'pending',
+        payment_date: new Date().toISOString(),
       };
 
       // Insert into database
@@ -1138,7 +1145,12 @@ const Registration = () => {
                     </div>
                     
                     <div className="space-y-3 sm:space-y-4">
-                      <PaymentMethod amount={getPrice(formData.category)} />
+                      <PaymentMethod 
+                        amount={getPrice(formData.category)}
+                        onMethodSelect={setSelectedPaymentMethodId}
+                        onReferenceInput={setPaymentReferenceNumber}
+                        defaultMethodId={selectedPaymentMethodId}
+                      />
                       
                       <div className="mt-3 sm:mt-4">
                         <Label htmlFor="paymentProof" className="text-sm sm:text-base">Upload Payment Screenshot</Label>

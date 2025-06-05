@@ -1,45 +1,91 @@
-# Welcome to your COG FamRun
+# COG FamRun 2025 Application
 
-## Project info
+## Enhanced Payment System
 
+The COG FamRun application now includes a comprehensive payment tracking system with the following features:
 
-///////////////////  EmailJS
+### Core Payment Features
+- Payment status tracking (pending, confirmed, rejected)
+- Payment method selection and management
+- Reference number tracking
+- Payment verification for administrators
+- Email notifications for payment status changes
 
-To complete this enhancement, you'll need to:
+### Advanced Payment Features
+- **Payment History Tracking**: Complete audit trail of all payment status changes
+- **Payment Receipt Generation**: Professional receipts for confirmed payments
+- **Batch Payment Processing**: Efficiently verify multiple payments at once
+- **Payment Analytics**: Dashboard with insights on payment data
 
-Sign up for an EmailJS account at https://www.emailjs.com/
-Create an email template for the registration confirmation with QR code
-Replace the placeholder values in the QRCodeGenerator component:
-YOUR_EMAILJS_PUBLIC_KEY
-YOUR_EMAILJS_SERVICE_ID
-YOUR_EMAILJS_TEMPLATE_ID
-The email template should include:
+## Documentation
 
-The enhancements I've made:
+The following documentation is available for the payment system:
 
-Added real QR code generation using the react-qr-code library
-Added email functionality using EmailJS to send the registration details and QR code to the participant's email
-Added loading state to the Generate QR Code button
-Added success/error toasts to notify the user about the email status
-The QR code will now be generated with actual data and displayed both on the screen and sent via email. The email will contain all the registration details and the QR code for easy access.
+- [Payment System Implementation](./PAYMENT-SYSTEM-IMPLEMENTATION.md): Overview of the payment tracking system
+- [Email Notification System](./EMAIL-NOTIFICATION-SYSTEM.md): Details about the email notification feature
+- [Payment Receipt & History](./PAYMENT-RECEIPT-HISTORY.md): Information on the receipt and history tracking features
 
-<h1>Registration Confirmation - COG FamRun 2025</h1>
-<p>Hello {{participant_name}},</p>
-<p>Thank you for registering for COG FamRun 2025! Here are your registration details:</p>
+## Getting Started
 
-<ul>
-  <li>Registration ID: {{registration_id}}</li>
-  <li>Category: {{category}}</li>
-  <li>Registration Fee: {{price}}</li>
-  <li>Shirt Size: {{shirt_size}}</li>
-</ul>
+### Prerequisites
+- Node.js (v16+)
+- npm or yarn
+- Supabase account
 
-<p>Your QR Code: {{qr_code_data}}</p>
+### Installation
 
-<h2>Important Reminders:</h2>
-<ul>
-  <li>Payment deadline: March 10, 2024</li>
-  <li>Kit collection: March 12-14, 2024</li>
-  <li>Race day: March 15, 2024 at 6:00 AM</li>
-  <li>Bring a valid ID and this QR code for verification</li>
-</ul>
+1. Clone the repository
+```bash
+git clone https://github.com/yourusername/famrun-main.git
+cd famrun-main
+```
+
+2. Install dependencies
+```bash
+npm install
+# or
+yarn
+```
+
+3. Set up environment variables
+```bash
+cp .env.example .env
+```
+Then edit the `.env` file with your Supabase credentials and other configuration.
+
+4. Run the database migrations
+```bash
+node scripts/run-migration.js
+```
+
+5. Start the development server
+```bash
+npm run dev
+# or
+yarn dev
+```
+
+### Testing Payment Features
+
+To test the payment receipt and history tracking functionality:
+
+```bash
+node scripts/test-receipt-history.mjs
+```
+
+## Project Structure
+
+- `/src/components/admin`: Admin dashboard components
+  - `PaymentVerification.tsx`: Payment verification interface
+  - `PaymentAnalytics.tsx`: Payment analytics dashboard
+  - `PaymentHistory.tsx`: Payment history component
+  - `PaymentReceipt.tsx`: Receipt generation component
+  - `BatchPaymentVerification.tsx`: Batch processing interface
+  
+- `/src/lib`: Utility functions
+  - `payment-utils.ts`: Payment status and receipt utilities
+  - `email-notification.ts`: Email sending functions
+  - `payment-styles.ts`: Shared styling for payment components
+
+- `/supabase/migrations`: Database migrations
+  - `20250606_add_payment_history.sql`: Migration for payment history and receipts

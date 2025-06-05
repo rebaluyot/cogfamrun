@@ -1,6 +1,3 @@
-# This script creates a simple REST API server to demonstrate the RLS issue 
-# and provide direct workarounds that can be applied from the admin panel
-
 import express from 'express';
 import { createClient } from '@supabase/supabase-js';
 import { readFileSync } from 'fs';
