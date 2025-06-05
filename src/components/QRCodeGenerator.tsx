@@ -410,6 +410,11 @@ export const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({ registrationId
             View Home
           </Button>
         </Link>
+        <Link to="/registration?new=true" className="w-full sm:w-auto">
+          <Button variant="outline" className="w-full sm:w-auto text-xs sm:text-sm py-1 px-3 sm:py-2">
+            Register Another Participant
+          </Button>
+        </Link>
       </div>
     </div>
   );

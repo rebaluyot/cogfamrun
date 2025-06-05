@@ -10,6 +10,7 @@ import { ReportsManagement } from "@/components/admin/ReportsManagement";
 import { BulkRegistrationUpload } from "@/components/admin/BulkRegistrationUpload";
 import { PaymentMethodManagement } from "@/components/admin/PaymentMethodManagement";
 import { PaymentVerification } from "@/components/admin/PaymentVerification";
+import { BatchPaymentVerification } from "@/components/admin/BatchPaymentVerification";
 
 const Admin = () => {
   return (
@@ -76,7 +77,20 @@ const Admin = () => {
         </TabsContent>
         
         <TabsContent value="payments">
-          <PaymentVerification />
+          <Tabs defaultValue="individual" className="w-full">
+            <TabsList className="grid w-full grid-cols-2 mb-4">
+              <TabsTrigger value="individual">Individual Verification</TabsTrigger>
+              <TabsTrigger value="batch">Batch Verification</TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="individual">
+              <PaymentVerification />
+            </TabsContent>
+            
+            <TabsContent value="batch">
+              <BatchPaymentVerification />
+            </TabsContent>
+          </Tabs>
         </TabsContent>
       </Tabs>
     </div>

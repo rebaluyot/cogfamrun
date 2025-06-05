@@ -19,6 +19,7 @@ import { useMinistries } from "@/hooks/useMinistries";
 import { useClusters } from "@/hooks/useClusters";
 import { formatCurrency } from "@/lib/format-utils";
 import emailjs from '@emailjs/browser';
+import { useSearchParams } from "react-router-dom";
 
 // Input validation helpers
 const isValidEmail = (email: string): boolean => {
@@ -133,6 +134,51 @@ const Registration = () => {
   const [paymentReferenceNumber, setPaymentReferenceNumber] = useState("");
   const [touchedFields, setTouchedFields] = useState<Record<string, boolean>>({});
   const [showErrorSummary, setShowErrorSummary] = useState(false);
+
+  // URL search parameter handling
+  const [searchParams] = useSearchParams();
+  
+  // Reset form when new=true is in the URL (from Register Another Participant button)
+  useEffect(() => {
+    const isNewRegistration = searchParams.get('new') === 'true';
+    
+    if (isNewRegistration) {
+      // Reset all form fields
+      setFormData({
+        firstName: "",
+        lastName: "",
+        email: "",
+        phone: "",
+        age: "",
+        gender: "",
+        category: "",
+        isChurchAttendee: false,
+        department: "",
+        ministry: "",
+        cluster: "",
+        emergencyContact: "",
+        emergencyPhone: "",
+        medicalConditions: "",
+        shirtSize: "",
+      });
+      
+      // Reset other states
+      setErrors({});
+      setShowQR(false);
+      setRegistrationId("");
+      setPaymentProof(null);
+      setSelectedPaymentMethodId(null);
+      setPaymentReferenceNumber("");
+      setTouchedFields({});
+      setShowErrorSummary(false);
+      
+      // Remove query parameter to prevent repeated resets
+      if (window.history.replaceState) {
+        const newUrl = window.location.pathname;
+        window.history.replaceState({path: newUrl}, '', newUrl);
+      }
+    }
+  }, [searchParams]);
 
   // Debounced validation for fields that are being actively typed in
   useEffect(() => {
