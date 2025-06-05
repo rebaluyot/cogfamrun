@@ -18,7 +18,7 @@ import { useDepartments } from "@/hooks/useDepartments";
 import { useMinistries } from "@/hooks/useMinistries";
 import { useClusters } from "@/hooks/useClusters";
 import { formatCurrency } from "@/lib/format-utils";
-import emailjs from '@emailjs/browser';
+// import emailjs from '@emailjs/browser';
 import { useSearchParams } from "react-router-dom";
 
 // Input validation helpers
@@ -90,7 +90,7 @@ interface ValidationErrors {
 }
 
 // Initialize EmailJS with your public key
-emailjs.init("vc8LzDacZcreqI6fN"); // Replace with your actual EmailJS public key
+// emailjs.init("vc8LzDacZcreqI6fN"); // Replace with your actual EmailJS public key
 
 interface ValidationErrors {
   firstName?: string;
