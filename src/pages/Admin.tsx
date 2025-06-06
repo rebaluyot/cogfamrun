@@ -12,6 +12,7 @@ import { PaymentMethodManagement } from "@/components/admin/PaymentMethodManagem
 import { PaymentVerification } from "@/components/admin/PaymentVerification";
 import { BatchPaymentVerification } from "@/components/admin/BatchPaymentVerification";
 import { EmailJSSettings } from "@/components/admin/EmailJSSettings";
+import { KitDistributionManagement } from "@/components/admin/KitDistributionManagement";
 
 const Admin = () => {
   return (
@@ -25,6 +26,9 @@ const Admin = () => {
         <TabsList className="bg-muted/50 p-1 w-full flex">
           <TabsTrigger value="payments" className="flex-1 data-[state=active]:bg-background bg-yellow-50 data-[state=active]:bg-yellow-100 font-medium">
             Payments
+          </TabsTrigger>
+          <TabsTrigger value="kit-distribution" className="flex-1 data-[state=active]:bg-background bg-green-50 data-[state=active]:bg-green-100 font-medium">
+            Kit Distribution
           </TabsTrigger>
           <TabsTrigger value="categories" className="flex-1 data-[state=active]:bg-background">
             Categories
@@ -95,6 +99,10 @@ const Admin = () => {
               <BatchPaymentVerification />
             </TabsContent>
           </Tabs>
+        </TabsContent>
+
+        <TabsContent value="kit-distribution">
+          <KitDistributionManagement />
         </TabsContent>
         
         <TabsContent value="settings">

@@ -13,6 +13,7 @@ import Admin from "./pages/Admin";
 import Registration from "./pages/Registration";
 import Login from "./pages/Login";
 import NotFound from "./pages/NotFound";
+import KitDistribution from "./pages/KitDistribution";
 import { Navigation } from "./components/Navigation";
 
 const queryClient = new QueryClient();
@@ -44,6 +45,11 @@ const App = () => {
                   <Route path="/admin" element={
                     <ProtectedRoute>
                       <Admin />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/kit-distribution" element={
+                    <ProtectedRoute>
+                      <KitDistribution />
                     </ProtectedRoute>
                   } />
                   <Route path="*" element={<NotFound />} />

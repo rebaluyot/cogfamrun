@@ -13,6 +13,7 @@ export const Navigation = () => {
     { name: "Home", path: "/" },
     { name: "Dashboard", path: "/dashboard" },
     { name: "Registration", path: "/registration" },
+    { name: "Kit Distribution", path: "/kit-distribution" },
     { name: "Admin", path: "/admin" },
   ];
 
