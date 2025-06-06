@@ -1171,10 +1171,6 @@ const Registration = () => {
                       </div>
                       <div className="flex items-center gap-2">
                         <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-blue-600 rounded-full"></div>
-                        <span>Water</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-blue-600 rounded-full"></div>
                         <span>Bib with RFID</span>
                       </div>
                     </div>
