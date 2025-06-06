@@ -6,6 +6,7 @@ import {
   SheetTrigger,
   SheetHeader,
   SheetTitle,
+  SheetClose,
 } from "@/components/ui/sheet";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
@@ -134,7 +135,8 @@ export const PaymentMethod = ({
                         <p>2. Scan this QR code or send to {method.account_number}</p>
                         <p>3. Enter the exact amount: ₱{amount.toLocaleString()}</p>
                         <p>4. Take a screenshot of your payment confirmation</p>
-                        <p>5. Upload the screenshot below</p>
+                        <p>5. Enter reference number below</p>
+                        <p>6. Upload the screenshot on the proof of payment</p>
                       </div>
                       
                       <div className="mt-4">
@@ -170,6 +172,28 @@ export const PaymentMethod = ({
                             Please enter the reference/transaction number from your payment receipt
                           </p>
                         )}
+                        
+                        <div className="mt-4">
+                          <SheetClose asChild>
+                            <button 
+                              className={`w-full py-3 rounded-xl font-semibold transition-all shadow hover:shadow-md ${
+                                referenceNumber.length >= 5 
+                                ? 'bg-[#00A1E4] text-white hover:bg-[#0089c3] hover:-translate-y-0.5 active:translate-y-0 border border-[#00A1E4]/20' 
+                                : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                              }`}
+                              disabled={referenceNumber.length < 5}
+                            >
+                              {referenceNumber.length >= 5 ? (
+                                <div className="flex items-center justify-center">
+                                  <span className="mr-2">✓</span>
+                                  <span>Confirm Payment</span>
+                                </div>
+                              ) : (
+                                "Confirm Payment"
+                              )}
+                            </button>
+                          </SheetClose>
+                        </div>
                       </div>
                     </div>
                   )}
