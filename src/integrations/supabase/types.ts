@@ -194,6 +194,7 @@ export type Database = {
           registration_id: string
           status: string | null
           updated_at: string | null
+          disclaimer_accepted?: string | null
         }
         Insert: {
           age?: number | null

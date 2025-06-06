@@ -546,10 +546,7 @@ const Registration = () => {
         payment_method_id: selectedPaymentMethodId,
         payment_reference_number: paymentReferenceNumber || null,
         payment_status: 'pending',
-        payment_date: new Date().toISOString(),
-        // Store disclaimer acceptance
-        disclaimer_accepted: disclaimerAccepted,
-        disclaimer_accepted_date: new Date().toISOString(),
+        payment_date: new Date().toISOString()
       };
 
       // Insert into database
