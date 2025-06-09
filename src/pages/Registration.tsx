@@ -90,6 +90,8 @@ interface ValidationErrors {
   emergencyContact?: string;
   emergencyPhone?: string;
   disclaimerAccepted?: string;
+  paymentMethod?: string;
+  paymentReference?: string;
 }
 
 const Registration = () => {
@@ -221,6 +223,10 @@ const Registration = () => {
     if (formData.isChurchAttendee && !formData.ministry) errorMessages.push("Ministry is required");
     // Cluster is now optional, so we don't check for it
     
+    // Check for payment method and reference
+    if (!selectedPaymentMethodId) errorMessages.push("Payment Method is required");
+    if (!paymentReferenceNumber || paymentReferenceNumber.length < 5) errorMessages.push("Valid Payment Reference Number is required (at least 5 characters)");
+    
     // Check for disclaimer acceptance
     if (!disclaimerAccepted) errorMessages.push("You must accept the terms and disclaimer to register");
     
@@ -247,6 +253,8 @@ const Registration = () => {
     else if (errorMessage.includes('Shirt Size')) fieldId = 'shirtSize';
     else if (errorMessage.includes('Department')) fieldId = 'department';
     else if (errorMessage.includes('Ministry')) fieldId = 'ministry';
+    else if (errorMessage.includes('Payment Method')) fieldId = 'payment-section';
+    else if (errorMessage.includes('Payment Reference')) fieldId = 'payment-section';
     else if (errorMessage.includes('disclaimer') || errorMessage.includes('terms')) fieldId = 'disclaimerAccepted';
     // Cluster navigation removed since it's now optional
     
@@ -323,6 +331,15 @@ const Registration = () => {
     // Check disclaimer acceptance
     if (!disclaimerAccepted) {
       newErrors.disclaimerAccepted = "You must accept the terms and disclaimer to register";
+    }
+    
+    // Check payment method and reference number
+    if (!selectedPaymentMethodId) {
+      newErrors.paymentMethod = "Please select a payment method";
+    }
+    
+    if (!paymentReferenceNumber || paymentReferenceNumber.length < 5) {
+      newErrors.paymentReference = "Please enter a valid payment reference number (at least 5 characters)";
     }
     
     // Form is valid if there are no error messages, other required fields are filled
@@ -457,6 +474,24 @@ const Registration = () => {
         toast({
           title: "Payment Proof Required",
           description: "Please upload your payment proof screenshot.",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      if (!selectedPaymentMethodId) {
+        toast({
+          title: "Payment Method Required",
+          description: "Please select a payment method before proceeding.",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      if (!paymentReferenceNumber || paymentReferenceNumber.length < 5) {
+        toast({
+          title: "Payment Reference Required",
+          description: "Please enter a valid payment reference number (at least 5 characters).",
           variant: "destructive",
         });
         return;
@@ -1178,9 +1213,11 @@ const Registration = () => {
                 </div>
 
                 {/* Payment Section */}
-                <div className="space-y-3 sm:space-y-4 mt-4 sm:mt-6">
-                  <h3 className="text-base sm:text-lg font-semibold">Payment Method</h3>
-                  <div className="p-3 sm:p-4 bg-gray-50 rounded-lg border">
+                <div id="payment-section" className="space-y-3 sm:space-y-4 mt-4 sm:mt-6">
+                  <h3 className="text-base sm:text-lg font-semibold">
+                    Payment Method <span className="text-red-500">*</span>
+                  </h3>
+                  <div className={`p-3 sm:p-4 ${(!selectedPaymentMethodId || !paymentReferenceNumber || paymentReferenceNumber.length < 5) && showErrorSummary ? "bg-red-50 border-red-200" : "bg-gray-50"} rounded-lg border`}>
                     <div className="mb-3 sm:mb-4">
                       <div className="text-base sm:text-lg font-semibold">Total Amount:</div>
                       <div className="text-2xl sm:text-3xl font-bold text-green-600">₱{getPrice(formData.category)}</div>
@@ -1194,8 +1231,22 @@ const Registration = () => {
                         defaultMethodId={selectedPaymentMethodId}
                       />
                       
+                      {!selectedPaymentMethodId && showErrorSummary && (
+                        <p className="text-red-500 text-xs font-medium">
+                          Please select a payment method
+                        </p>
+                      )}
+                      
+                      {selectedPaymentMethodId && (!paymentReferenceNumber || paymentReferenceNumber.length < 5) && showErrorSummary && (
+                        <p className="text-red-500 text-xs font-medium">
+                          Please enter a valid payment reference number (at least 5 characters)
+                        </p>
+                      )}
+                      
                       <div className="mt-3 sm:mt-4">
-                        <Label htmlFor="paymentProof" className="text-sm sm:text-base">Upload Payment Screenshot</Label>
+                        <Label htmlFor="paymentProof" className="text-sm sm:text-base">
+                          Upload Payment Screenshot <span className="text-red-500">*</span>
+                        </Label>
                         <Input
                           id="paymentProof"
                           type="file"
@@ -1212,11 +1263,17 @@ const Registration = () => {
                             }
                             setPaymentProof(file || null);
                           }}
-                          className="mt-1 sm:mt-2 text-sm sm:text-base"
+                          className={`mt-1 sm:mt-2 text-sm sm:text-base ${!paymentProof && showErrorSummary ? "border-red-500" : ""}`}
+                          required
                         />
                         <p className="text-xs text-gray-500 mt-1">
-                          Please upload a screenshot of your GCash payment confirmation (maximum 5MB)
+                          Please upload a screenshot of your payment confirmation (maximum 5MB)
                         </p>
+                        {!paymentProof && showErrorSummary && (
+                          <p className="text-red-500 text-xs mt-1">
+                            Payment proof screenshot is required
+                          </p>
+                        )}
                       </div>
                     </div>
                   </div>

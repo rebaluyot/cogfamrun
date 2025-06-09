@@ -81,7 +81,9 @@ export const PaymentMethod = ({
                 className="h-8 w-24 object-contain"
               />
             </div>
-            <span className="text-lg tracking-wide">Pay with {paymentTypeLabel}</span>
+            <span className="text-lg tracking-wide">
+              Pay with {paymentTypeLabel} <span className="text-red-500">*</span>
+            </span>
           </div>
         </button>
       </SheetTrigger>
