@@ -8,20 +8,30 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
 import { KitDistributionScanner } from '@/components/admin/KitDistributionScanner';
+import { BulkKitDistribution } from '@/components/admin/BulkKitDistribution';
 import { useRegistrations } from '@/hooks/useRegistrations';
 import { useKitDistribution, KitClaimData } from '@/hooks/useKitDistribution';
-import { Loader2, Search, CheckCircle2, QrCode, FileTextIcon, XCircle, Edit, MoreHorizontal, AlertTriangle, Map, Settings } from 'lucide-react';
+import { Loader2, Search, CheckCircle2, QrCode, FileTextIcon, XCircle, Edit, MoreHorizontal, AlertTriangle, Map, Settings, Users } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 export const KitDistributionManagement: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedParticipant, setSelectedParticipant] = useState<any | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState('scan');
+  const [activeTab, setActiveTab] = useState(() => {
+    // Try to get the last active tab from localStorage
+    const savedTab = localStorage.getItem('kitDistributionActiveTab');
+    return savedTab || 'scan';
+  });
   
   const { data: registrations, isLoading } = useRegistrations();
   const { updateKitClaimStatus } = useKitDistribution();
   const { toast } = useToast();
+  
+  // Save active tab to localStorage when it changes
+  useEffect(() => {
+    localStorage.setItem('kitDistributionActiveTab', activeTab);
+  }, [activeTab]);
 
   // Filter registrations by search term
   const filteredRegistrations = registrations?.filter(reg => {
@@ -160,7 +170,7 @@ export const KitDistributionManagement: React.FC = () => {
       </div>
       
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid grid-cols-2 w-full md:w-[400px]">
+        <TabsList className="grid grid-cols-3 w-full md:w-[600px]">
           <TabsTrigger value="scan" className="flex items-center gap-2">
             <QrCode className="h-4 w-4" />
             QR Scanner
@@ -169,12 +179,20 @@ export const KitDistributionManagement: React.FC = () => {
             <FileTextIcon className="h-4 w-4" />
             Participants List
           </TabsTrigger>
+          <TabsTrigger value="bulk" className="flex items-center gap-2">
+            <Users className="h-4 w-4" />
+            Bulk Distribution
+          </TabsTrigger>
         </TabsList>
         
         <TabsContent value="scan" className="mt-6">
           <KitDistributionScanner />
         </TabsContent>
         
+        <TabsContent value="bulk" className="mt-6">
+          <BulkKitDistribution />
+        </TabsContent>
+
         <TabsContent value="list" className="mt-6">
           <Card>
             <CardHeader>
