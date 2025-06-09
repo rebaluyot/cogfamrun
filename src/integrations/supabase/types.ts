@@ -14,7 +14,9 @@ export type Database = {
           created_at: string | null
           id: string
           password_hash: string
-          username: string
+          username: string,
+          is_admin: boolean,
+          can_distribute_kits: boolean
         }
         Insert: {
           created_at?: string | null

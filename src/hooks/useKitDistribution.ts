@@ -71,8 +71,11 @@ export const useKitDistribution = () => {
     // Create a properly typed Registration object with QR data
     const result = {
       ...(data as unknown as Registration),
+      amount_paid: data.price,
       qrData: parsedData
     };
+
+    console.warn(result);
     
     // Add kit claim fields if they don't exist
     if (result.kit_claimed === undefined) result.kit_claimed = false;

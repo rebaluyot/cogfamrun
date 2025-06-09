@@ -29,7 +29,7 @@ export const KitDistributionPage = () => {
   const [registration, setRegistration] = useState<any>(null);
   const { parseQRCode, lookupRegistration, updateKitClaimStatus } = useKitDistribution();
   const { toast } = useToast();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, hasPermission } = useAuth();
   const queryClient = useQueryClient();
   
   // Clean up scanner on component unmount
@@ -259,7 +259,7 @@ export const KitDistributionPage = () => {
   };
   
   return (
-    <ProtectedRoute>
+    <ProtectedRoute requiredPermission="canDistributeKits">
       <div className="container max-w-5xl mx-auto py-6 space-y-6">
         <div className="flex flex-col gap-2">
           <h1 className="text-3xl font-bold tracking-tight">Kit Distribution</h1>

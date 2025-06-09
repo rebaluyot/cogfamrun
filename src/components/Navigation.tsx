@@ -7,15 +7,18 @@ import { useAuth } from "@/contexts/AuthContext";
 export const Navigation = () => {
   const [isOpen, setIsOpen] = useState(false);
   const location = useLocation();
-  const { isAuthenticated, logout } = useAuth();
-
+  const { isAuthenticated, logout, hasPermission } = useAuth();
+  
+  // Filter navigation items based on user permissions
   const navItems = [
     { name: "Home", path: "/" },
     { name: "Dashboard", path: "/dashboard" },
     { name: "Registration", path: "/registration" },
-    { name: "Kit Distribution", path: "/kit-distribution" },
-    { name: "Admin", path: "/admin" },
-  ];
+    // Show Kit Distribution only if user has permission
+    hasPermission("canDistributeKits") ? { name: "Kit Distribution", path: "/kit-distribution" } : null,
+    // Show Admin panel only for admins
+    hasPermission("isAdmin") ? { name: "Admin", path: "/admin" } : null,
+  ].filter(Boolean); // Remove null entries
 
   const isActive = (path: string) => location.pathname === path;
 
