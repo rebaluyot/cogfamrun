@@ -20,7 +20,7 @@ const Login = () => {
     
     const success = await login(username, password);
     if (success) {
-      navigate('/admin');
+      navigate('/');
     }
     
     setLoading(false);

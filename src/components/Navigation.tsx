@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Menu, X, LogOut } from "lucide-react";
+import { Menu, X, LogOut, LogIn } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 
 export const Navigation = () => {
@@ -12,7 +12,7 @@ export const Navigation = () => {
   // Filter navigation items based on user permissions
   const navItems = [
     { name: "Home", path: "/" },
-    { name: "Dashboard", path: "/dashboard" },
+    hasPermission("isAdmin") ? { name: "Dashboard", path: "/dashboard" } : null,
     { name: "Registration", path: "/registration" },
     // Show Kit Distribution only if user has permission
     hasPermission("canDistributeKits") ? { name: "Kit Distribution", path: "/kit-distribution" } : null,
@@ -59,7 +59,7 @@ export const Navigation = () => {
                 </Button>
               </Link>
             ))}
-            {isAuthenticated && (
+            {isAuthenticated ? (
               <Button 
                 variant="outline" 
                 onClick={handleLogout} 
@@ -68,6 +68,13 @@ export const Navigation = () => {
                 <LogOut className="h-4 w-4" />
                 Logout
               </Button>
+            ) : (
+              <Link to="/login">
+                <Button variant="default" className="bg-primary hover:bg-primary/90 flex items-center gap-2">
+                  <LogIn className="h-4 w-4" />
+                  Login
+                </Button>
+              </Link>
             )}
           </div>
 
@@ -100,7 +107,7 @@ export const Navigation = () => {
                   </Button>
                 </Link>
               ))}
-              {isAuthenticated && (
+              {isAuthenticated ? (
                 <Button 
                   variant="outline" 
                   onClick={handleLogout}
@@ -109,6 +116,16 @@ export const Navigation = () => {
                   <LogOut className="h-4 w-4" />
                   Logout
                 </Button>
+              ) : (
+                <Link to="/login" onClick={() => setIsOpen(false)}>
+                  <Button 
+                    variant="default" 
+                    className="w-full justify-start bg-primary hover:bg-primary/90 flex items-center gap-2"
+                  >
+                    <LogIn className="h-4 w-4" />
+                    Login
+                  </Button>
+                </Link>
               )}
             </nav>
           </div>
