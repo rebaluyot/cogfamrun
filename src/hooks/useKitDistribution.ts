@@ -24,7 +24,8 @@ export const useKitDistribution = () => {
     shirtSize: string;
   } | null => {
     try {
-      // QR data format: CogFamRun2025|registration_id|participant_name|category|price|shirt_size
+      console.warn(qrData);
+        // QR data format: CogFamRun2025|registration_id|participant_name|category|price|shirt_size
       const [prefix, registrationId, participantName, category, price, shirtSize] = qrData.split('|');
       
       if (prefix !== 'CogFamRun2025') {

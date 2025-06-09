@@ -26,6 +26,16 @@ export const KitDistributionScanner: React.FC<QRScannerProps> = ({ onComplete })
   const [claimerName, setClaimerName] = useState('');
   const [claimNotes, setClaimNotes] = useState('');
   const [hasSubmitted, setHasSubmitted] = useState(false);
+  const [cameraError, setCameraError] = useState<string | null>(null);
+  
+  // State for manual entry mode and protocol checking
+  const [manualMode, setManualMode] = useState(false);
+  const [manualQrValue, setManualQrValue] = useState("");
+  const [isSecureContext, setIsSecureContext] = useState<boolean>(false);
+  const [securityWarningDismissed, setSecurityWarningDismissed] = useState<boolean>(false);
+  
+  // State to track empty camera labels issue
+  const [hasEmptyLabelsIssue, setHasEmptyLabelsIssue] = useState<boolean>(false);
   
   const qrScannerRef = useRef<any>(null);
   const qrContainerRef = useRef<HTMLDivElement>(null);
@@ -44,34 +54,67 @@ export const KitDistributionScanner: React.FC<QRScannerProps> = ({ onComplete })
       }
     };
   }, []);
-
-  // State to track camera errors
-  const [cameraError, setCameraError] = useState<string | null>(null);
   
   // Utility function to check camera permissions
-  const checkCameraPermission = async (): Promise<{granted: boolean, error?: string}> => {
+  const checkCameraPermission = async (): Promise<{granted: boolean, error?: string, status?: string}> => {
     try {
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-        return { granted: false, error: "Camera API not available in this browser" };
+        return { granted: false, error: "Camera API not available in this browser", status: "api_not_available" };
+      }
+      
+      // First check if we can enumerate devices (this doesn't need permissions on all browsers)
+      const devices = await navigator.mediaDevices.enumerateDevices();
+      const videoDevices = devices.filter(device => device.kind === 'videoinput');
+      
+      if (videoDevices.length === 0) {
+        return { granted: false, error: "No camera detected on this device.", status: "no_camera" };
+      }
+      
+      // Check for the "empty labels" issue which indicates permission hasn't been granted on macOS
+      const labeledDevices = videoDevices.filter(device => !!device.label);
+      if (videoDevices.length > 0 && labeledDevices.length === 0) {
+        console.log("Empty labels detected - macOS permission issue likely");
+        setHasEmptyLabelsIssue(true);
+        
+        // This is a special case for macOS where we detect cameras but can't access them yet
+        return { granted: false, error: "Camera detected but requires explicit permission", status: "empty_labels" };
       }
       
       // Try to access the camera - this will trigger the permission prompt if not decided yet
       await navigator.mediaDevices.getUserMedia({ video: true });
-      return { granted: true };
+      return { granted: true, status: "granted" };
     } catch (err) {
       console.warn("Camera permission check failed:", err);
       
       // Parse the error to provide more specific guidance
       const error = err as Error;
       if (error.name === "NotAllowedError" || error.name === "PermissionDeniedError") {
-        return { granted: false, error: "Camera permission denied. Please enable camera access in your browser settings." };
+        return { 
+          granted: false, 
+          error: "Camera permission denied. Please enable camera access in your browser settings.", 
+          status: "denied" 
+        };
       } else if (error.name === "NotFoundError") {
-        return { granted: false, error: "No camera found. Please ensure your camera is connected properly." };
+        return { 
+          granted: false, 
+          error: "No camera found. Please ensure your camera is connected properly.", 
+          status: "not_found" 
+        };
       } else if (error.name === "NotReadableError") {
-        return { granted: false, error: "Camera is in use by another application. Please close other applications that might be using the camera." };
+        return { 
+          granted: false, 
+          error: "Camera is in use by another application. Please close other applications that might be using the camera.", 
+          status: "in_use" 
+        };
+      } else if (error.name === "TypeError" && error.message.includes("overconstrained")) {
+        return { 
+          granted: false, 
+          error: "Camera constraints not satisfied. Try using a different camera if available.", 
+          status: "overconstrained" 
+        };
       }
       
-      return { granted: false, error: `Camera error: ${error.message}` };
+      return { granted: false, error: `Camera error: ${error.message}`, status: "unknown_error" };
     }
   };
 
@@ -101,25 +144,23 @@ export const KitDistributionScanner: React.FC<QRScannerProps> = ({ onComplete })
       }
     }
     
-    // Check if camera is available
+    // Comprehensive camera permission check and handling
     try {
-      // Check camera permissions first on modern browsers
-      const devices = await navigator.mediaDevices.enumerateDevices();
-      const videoDevices = devices.filter(device => device.kind === 'videoinput');
-      console.log("Available camera devices:", videoDevices);
+      // First explicitly check camera permissions to handle them properly
+      const permissionCheck = await checkCameraPermission();
+      console.log("Camera permission check result:", permissionCheck);
       
-      if (videoDevices.length === 0) {
-        throw new Error("No camera detected on this device");
-      }        // Check for Mac-specific privacy concerns
-        const labeledDevices = videoDevices.filter(device => !!device.label);
-        if (videoDevices.length > 0 && labeledDevices.length === 0) {
-          console.warn("Camera detected but labels are empty - likely permission issue");
+      if (!permissionCheck.granted) {
+        // Specific handling for different camera permission scenarios
+        if (permissionCheck.status === 'empty_labels') {
+          // This is the macOS specific issue where cameras are detected but labels are empty
+          console.log("Detected macOS empty labels issue - will try to request permission explicitly");
           setHasEmptyLabelsIssue(true);
           
           // On macOS this typically means permission hasn't been granted yet
           const isMac = /Mac|iPhone|iPad|iPod/.test(navigator.platform);
           if (isMac) {
-            // We'll notify the user but continue - the browser will show its own permission dialog
+            // We'll notify the user but continue - may need to explicitly trigger permission dialog
             toast({
               title: "Camera Permission Required",
               description: "We've detected your camera, but permission is needed. Please click 'Allow' when prompted.",
@@ -128,35 +169,57 @@ export const KitDistributionScanner: React.FC<QRScannerProps> = ({ onComplete })
             
             // Try to explicitly request permission to trigger the browser dialog
             try {
-              // This should trigger the browser permission prompt
-              setTimeout(async () => {
-                try {
-                  await navigator.mediaDevices.getUserMedia({ video: true });
-                  
-                  // If successful, restart scanner after a short delay
-                  setTimeout(() => {
-                    stopScanner();
-                    startScanner();
-                  }, 1000);
-                } catch (err) {
-                  console.error("Permission request failed during empty labels handling:", err);
-                }
-              }, 500);
+              // This should trigger the browser permission prompt - explicitly wait for it
+              const permissionResult = await new Promise<boolean>((resolve) => {
+                // Use a timeout to give the browser a chance to show the permission dialog
+                setTimeout(async () => {
+                  try {
+                    await navigator.mediaDevices.getUserMedia({ video: true });
+                    resolve(true);
+                  } catch (err) {
+                    console.error("Permission request failed during empty labels handling:", err);
+                    resolve(false);
+                  }
+                }, 500);
+              });
+              
+              if (permissionResult) {
+                // Permission was granted, clear the empty labels issue flag
+                setHasEmptyLabelsIssue(false);
+                console.log("Camera permission granted successfully");
+              }
             } catch (e) {
               // Don't show error, just log it - we'll continue with scanner init anyway
               console.warn("Could not request permission during empty labels handling:", e);
             }
           }
+        } else if (permissionCheck.status === 'denied') {
+          // User has explicitly denied permission before
+          setCameraError("Camera permission was denied. Please check your browser settings to enable camera access.");
+          // Show macOS specific instructions if on Mac
+          if (/Mac|iPhone|iPad|iPod/.test(navigator.platform)) {
+            setCameraError("Camera permission denied on macOS. Please go to System Preferences > Security & Privacy > Camera and enable permission for your browser, then restart your browser.");
+          }
+          setScanning(false);
+          return;
+        } else if (permissionCheck.status === 'no_camera') {
+          setCameraError("No camera detected on this device. Please make sure your camera is connected and working.");
+          setScanning(false);
+          return;
         }
+      }
     } catch (err) {
       console.warn("Camera permission check failed:", err);
-      // We'll continue anyway, as the scanner will handle permission requests
-      // but log this for debugging
+      // Log detailed information for debugging purposes
       console.log("Camera permission error details:", {
         error: err instanceof Error ? err.message : String(err),
         secureContext: isSecureContext,
-        navigator: navigator && navigator.mediaDevices ? 'available' : 'unavailable'
+        navigator: navigator && navigator.mediaDevices ? 'available' : 'unavailable',
+        platform: navigator.platform,
+        userAgent: navigator.userAgent
       });
+      
+      // Continue anyway in most cases, as we handle permissions in the scanner initialization
     }
     
     // Dynamically import the scanner to avoid SSR issues
@@ -169,6 +232,19 @@ export const KitDistributionScanner: React.FC<QRScannerProps> = ({ onComplete })
         throw new Error("Failed to load QR scanner library");
       }
       
+      // Before initializing the scanner, try to explicitly get camera permission
+      // This is particularly important for macOS where the camera might be detected
+      // but permission might not have been granted yet
+      try {
+        // Try to access the camera directly first to trigger permission dialog if needed
+        await navigator.mediaDevices.getUserMedia({ video: true });
+        console.log("Camera permission successfully obtained before scanner initialization");
+        setHasEmptyLabelsIssue(false);
+      } catch (permErr) {
+        console.warn("Pre-scanner camera permission request failed:", permErr);
+        // We'll continue with scanner initialization and let it handle permissions
+      }
+      
       const scanner = new Html5QrcodeScanner(
         "qr-reader", 
         { 
@@ -178,6 +254,12 @@ export const KitDistributionScanner: React.FC<QRScannerProps> = ({ onComplete })
           showTorchButtonIfSupported: true, // Show torch button for low light
           aspectRatio: 1.0, // Use square aspect ratio for better compatibility
           formatsToSupport: [0], // Only support QR codes for better performance
+          videoConstraints: {
+            // Explicitly set video constraints for better compatibility
+            width: { ideal: 1280 },
+            height: { ideal: 720 },
+            facingMode: "environment" // Use rear camera on mobile devices
+          }
         },
         /* verbose= */ false
       );
@@ -185,58 +267,81 @@ export const KitDistributionScanner: React.FC<QRScannerProps> = ({ onComplete })
       scanner.render(onQRCodeSuccess, onQRCodeError);
       qrScannerRef.current = scanner;
       
-      // Check if the scanner initialized properly
-      // First check: Look for immediate permission dialog appearance (faster feedback)
+      // Enhanced permission detection system
+      // First quick check: Look for immediate permission dialog appearance (faster feedback)
       setTimeout(() => {
-        if (scanning) {
-          const qrReader = document.getElementById('qr-reader');
-          const permissionSection = qrReader?.querySelector('[class*="permission"]');
-          
-          if (permissionSection) {
-            console.log("Permission dialog detected - waiting for user input");
-            // We found a permission dialog - don't show an error yet, wait for user to respond
-            toast({
-              title: "Camera Permission",
-              description: "Please click 'Allow' in the browser permission dialog to access your camera.",
-              duration: 8000,
-            });
-          }
+        if (!scanning) return; // Exit early if no longer scanning
+        
+        const qrReader = document.getElementById('qr-reader');
+        const permissionSection = qrReader?.querySelector('[class*="permission"]');
+        
+        if (permissionSection) {
+          console.log("Permission dialog detected - waiting for user input");
+          // We found a permission dialog - don't show an error yet, wait for user to respond
+          toast({
+            title: "Camera Permission",
+            description: "Please click 'Allow' in the browser permission dialog to access your camera.",
+            duration: 8000,
+          });
         }
       }, 1000);
       
-      // Second check: More complete verification after waiting longer
-      setTimeout(() => {
-        if (scanning) {
-          const qrReader = document.getElementById('qr-reader');
-          const videoElement = qrReader?.querySelector('video');
-          
-          if (!videoElement) {
-            // Check if there's a permission error message
-            const permissionSection = qrReader?.querySelector('[class*="permission"]');
-            if (permissionSection) {
-              setCameraError("Camera permission required. Please allow camera access when prompted by your browser.");
-            } else {
-              // More detailed Mac-specific guidance
-              const isMac = /Mac|iPhone|iPad|iPod/.test(navigator.platform);
-              if (isMac) {
-                setCameraError(
-                  "Camera not accessible on macOS. Please check:\n" +
-                  "1. System Preferences > Security & Privacy > Camera\n" +
-                  "2. Ensure your browser is checked in the list\n" +
-                  "3. Restart your browser after enabling permissions\n" +
-                  "4. Consider using Manual QR Entry instead"
-                );
-                
-                // On macOS Catalina and later, show additional help
-                toast({
-                  title: "macOS Camera Permission Required",
-                  description: "Your Mac requires explicit permission for camera access. Open System Preferences and grant permission to your browser.",
-                  duration: 10000,
-                  variant: "destructive",
-                });
+      // Second check: Check for camera initialization after a short delay
+      setTimeout(async () => {
+        if (!scanning) return; // Exit early if no longer scanning
+        
+        const qrReader = document.getElementById('qr-reader');
+        const videoElement = qrReader?.querySelector('video');
+        
+        if (videoElement) {
+          console.log("Camera successfully initialized");
+          // Camera is working, make sure we clear any empty labels issue flag
+          setHasEmptyLabelsIssue(false);
+        } else {
+          // No video element found - check if permission dialog is showing
+          const permissionSection = qrReader?.querySelector('[class*="permission"]');
+          if (permissionSection) {
+            console.log("Permission dialog still showing - waiting for user response");
+            // We'll continue waiting as the user might still respond to permission dialog
+          } else {
+            // Try to diagnose the issue more specifically for better user guidance
+            try {
+              // Re-check permission status to provide more accurate feedback
+              const permStatus = await checkCameraPermission();
+              
+              if (permStatus.status === 'empty_labels') {
+                // Special handling for the macOS empty labels issue
+                const isMac = /Mac|iPhone|iPad|iPod/.test(navigator.platform);
+                if (isMac) {
+                  // Show detailed macOS guidance
+                  setCameraError(
+                    "Camera detected but inaccessible on macOS. Please check:\n" +
+                    "1. System Preferences > Security & Privacy > Camera\n" +
+                    "2. Ensure your browser is checked in the list\n" +
+                    "3. Restart your browser after enabling permissions\n" +
+                    "4. Consider using Manual QR Entry instead"
+                  );
+                  
+                  // Show a more prominent toast with guidance
+                  toast({
+                    title: "macOS Camera Permission Required",
+                    description: "Your Mac requires explicit permission for camera access. Open System Preferences and grant permission to your browser.",
+                    duration: 10000,
+                    variant: "destructive",
+                  });
+                }
+              } else if (permStatus.status === 'denied') {
+                setCameraError("Camera permission was denied. Please enable camera access in your browser settings.");
               } else {
+                // Generic error for other cases
                 setCameraError("Camera not accessible. Please check your camera permissions and ensure your browser has access.");
               }
+              
+              // If we can't initialize the camera after this time, stop scanning
+              setScanning(false);
+            } catch (err) {
+              console.error("Error during camera diagnosis:", err);
+              setCameraError("Camera initialization failed. Please check permissions and try again.");
               setScanning(false);
             }
           }
@@ -386,15 +491,6 @@ export const KitDistributionScanner: React.FC<QRScannerProps> = ({ onComplete })
     setHasSubmitted(false);
     startScanner();
   };
-
-  // State for manual entry mode and protocol checking
-  const [manualMode, setManualMode] = useState(false);
-  const [manualQrValue, setManualQrValue] = useState("");
-  const [isSecureContext, setIsSecureContext] = useState<boolean>(false);
-  const [securityWarningDismissed, setSecurityWarningDismissed] = useState<boolean>(false);
-
-  // State to track empty camera labels issue
-  const [hasEmptyLabelsIssue, setHasEmptyLabelsIssue] = useState<boolean>(false);
   
   // Check if we're in a secure context (HTTPS)
   useEffect(() => {

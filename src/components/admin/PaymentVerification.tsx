@@ -86,6 +86,19 @@ export const PaymentVerification = () => {
   const [showReferenceField, setShowReferenceField] = useState<boolean>(false);
   const [updatedPaymentMethodId, setUpdatedPaymentMethodId] = useState<string>("");
   const [updatedReferenceNumber, setUpdatedReferenceNumber] = useState<string>("");
+  
+  // Participant info editing
+  const [showParticipantInfoFields, setShowParticipantInfoFields] = useState<boolean>(false);
+  const [updatedEmail, setUpdatedEmail] = useState<string>("");
+  const [updatedShirtSize, setUpdatedShirtSize] = useState<string>("");
+  const [updatedCategory, setUpdatedCategory] = useState<string>("");
+  const [availableCategories, setAvailableCategories] = useState<string[]>([
+    "3K", "6K", "10K"
+  ]);
+  const [availableShirtSizes, setAvailableShirtSizes] = useState<string[]>([
+    "3XS", "2XS", "XS", "S", "M", "L", "XL", "2XL", "3XL", "4XL", "5XL"
+  ]);
+
 
   // Fetch registrations with payment information
   const { data: registrations, isLoading, refetch } = useQuery({
@@ -184,6 +197,12 @@ export const PaymentVerification = () => {
     setUpdatedPaymentMethodId("");
     setUpdatedReferenceNumber("");
     
+    // Reset participant info editing fields
+    setShowParticipantInfoFields(false);
+    setUpdatedEmail(registration.email || "");
+    setUpdatedShirtSize(registration.shirt_size || "");
+    setUpdatedCategory(registration.category || "");
+    
     setIsDialogOpen(true);
   };
 
@@ -213,44 +232,135 @@ export const PaymentVerification = () => {
         updatedRegistration.payment_reference_number = updatedReferenceNumber.trim();
       }
       
-      // Use the utility function for updating payment status with history tracking
-      const { success, error, receiptNumber } = await updatePaymentStatus(
-        updatedRegistration,
-        paymentStatus as 'confirmed' | 'rejected' | 'pending',
-        paymentNotes || null,
-        "admin", // This could be dynamically set to the logged-in admin
-        sendEmail
-      );
+      // Apply participant info updates if selected
+      let participantInfoChanged = false;
+      let participantUpdateFields: any = {};
       
-      if (!success) throw error;
+      if (showParticipantInfoFields) {
+        // Check and apply email update
+        if (updatedEmail && updatedEmail !== selectedRegistration.email) {
+          updatedRegistration.email = updatedEmail.trim();
+          participantUpdateFields.email = updatedEmail.trim();
+          participantInfoChanged = true;
+        }
+        
+        // Check and apply shirt size update
+        if (updatedShirtSize && updatedShirtSize !== selectedRegistration.shirt_size) {
+          updatedRegistration.shirt_size = updatedShirtSize;
+          participantUpdateFields.shirt_size = updatedShirtSize;
+          participantInfoChanged = true;
+        }
+        
+        // Check and apply category update
+        if (updatedCategory && updatedCategory !== selectedRegistration.category) {
+          updatedRegistration.category = updatedCategory;
+          participantUpdateFields.category = updatedCategory;
+          participantInfoChanged = true;
+        }
+        
+        // If participant info changed but payment status didn't, update the registration directly
+        if (participantInfoChanged && paymentStatus === selectedRegistration.payment_status) {
+          const { data: updatedData, error: updateError } = await supabase
+            .from('registrations')
+            .update(participantUpdateFields)
+            .eq('id', selectedRegistration.id)
+            .select();
+            
+          if (updateError) {
+            console.error('Error updating participant info:', updateError);
+            throw updateError;
+          }
+        }
+      }
+      
+      // Check if we need to update payment status - if status changed or there are payment-related updates
+      const paymentStatusChanged = paymentStatus !== selectedRegistration.payment_status;
+      // Check if payment fields actually changed, not just if they're shown
+      const paymentMethodChanged = showPaymentMethodField && updatedPaymentMethodId && updatedPaymentMethodId !== "no_change";
+      const referenceChanged = showReferenceField && updatedReferenceNumber.trim() !== (selectedRegistration.payment_reference_number || "");
+      const notesChanged = paymentNotes !== selectedRegistration.payment_notes;
+      const paymentFieldsChanged = paymentMethodChanged || referenceChanged || notesChanged;
+      
+      let receiptNumber: string | undefined;
+      
+      if (paymentStatusChanged || paymentFieldsChanged) {
+        // Use the utility function for updating payment status with history tracking
+        const result = await updatePaymentStatus(
+          updatedRegistration,
+          paymentStatus as 'confirmed' | 'rejected' | 'pending',
+          paymentNotes || null,
+          "admin", // This could be dynamically set to the logged-in admin
+          sendEmail
+        );
+        
+        if (!result.success) throw result.error;
+        receiptNumber = result.receiptNumber;
+      }
       
       // Prepare base message
       let baseMessage = '';
-      if (paymentStatus === 'confirmed') {
-        baseMessage = receiptNumber 
-          ? `Payment for ${selectedRegistration.first_name} confirmed. Receipt #${receiptNumber} generated.` 
-          : `Payment for ${selectedRegistration.first_name} confirmed.`;
-      } else if (paymentStatus === 'rejected') {
-        baseMessage = `Payment for ${selectedRegistration.first_name} has been marked as rejected.`;
+      let toastTitle = '';
+      
+      // Create payment status change message if applicable
+      if (paymentStatusChanged) {
+        if (paymentStatus === 'confirmed') {
+          baseMessage = receiptNumber 
+            ? `Payment for ${selectedRegistration.first_name} confirmed. Receipt #${receiptNumber} generated.` 
+            : `Payment for ${selectedRegistration.first_name} confirmed.`;
+          toastTitle = "Payment Confirmed";
+        } else if (paymentStatus === 'rejected') {
+          baseMessage = `Payment for ${selectedRegistration.first_name} has been marked as rejected.`;
+          toastTitle = "Payment Rejected";
+        } else {
+          baseMessage = `Payment status for ${selectedRegistration.first_name} has been updated to ${paymentStatus}.`;
+          toastTitle = "Payment Updated";
+        }
+      } else if (participantInfoChanged || paymentFieldsChanged) {
+        // If only participant info or payment details changed
+        baseMessage = `Information for ${selectedRegistration.first_name} has been updated.`;
+        toastTitle = "Information Updated";
       } else {
-        baseMessage = `Payment status for ${selectedRegistration.first_name} has been updated to ${paymentStatus}.`;
+        // If no changes detected
+        baseMessage = `No changes detected for ${selectedRegistration.first_name}.`;
+        toastTitle = "No Changes";
       }
       
       // Add info about payment method updates
-      if (showPaymentMethodField && updatedPaymentMethodId && updatedPaymentMethodId !== "no_change") {
+      if (paymentMethodChanged) {
         const methodName = paymentMethods?.find(m => m.id.toString() === updatedPaymentMethodId)?.name || 'selected method';
         baseMessage += ` Payment method updated to ${methodName}.`;
       }
       
       // Add info about reference updates
-      if (showReferenceField && updatedReferenceNumber.trim()) {
+      if (referenceChanged) {
         baseMessage += ` Reference number updated.`;
+      }
+      
+      // Add info about notes updates
+      if (notesChanged && !paymentStatusChanged) {
+        baseMessage += ` Payment notes updated.`;
+      }
+      
+      // Add info about participant field updates
+      if (participantInfoChanged) {
+        const updatedFields = [];
+        
+        if (updatedEmail && updatedEmail !== selectedRegistration.email) {
+          updatedFields.push("email");
+        }
+        if (updatedShirtSize && updatedShirtSize !== selectedRegistration.shirt_size) {
+          updatedFields.push("shirt size");
+        }
+        if (updatedCategory && updatedCategory !== selectedRegistration.category) {
+          updatedFields.push("race category");
+        }
+        
+        baseMessage += ` Participant ${updatedFields.join(", ")} updated.`;
       }
       
       // Show toast with the combined message
       toast({
-        title: paymentStatus === 'confirmed' ? "Payment Confirmed" : 
-               paymentStatus === 'rejected' ? "Payment Rejected" : "Payment Updated",
+        title: toastTitle,
         description: baseMessage,
       });
       
@@ -517,6 +627,70 @@ export const PaymentVerification = () => {
                             value={updatedReferenceNumber}
                             onChange={(e) => setUpdatedReferenceNumber(e.target.value)}
                           />
+                        </div>
+                      )}
+                    </div>
+                    
+                    {/* Participant Information Update Option */}
+                    <div className="space-y-2 mt-4 pt-4 border-t">
+                      <div className="flex items-center space-x-2">
+                        <Checkbox 
+                          id="update-participant-info" 
+                          checked={showParticipantInfoFields}
+                          onCheckedChange={(checked) => setShowParticipantInfoFields(checked === true)}
+                        />
+                        <Label 
+                          htmlFor="update-participant-info" 
+                          className="text-sm cursor-pointer"
+                        >
+                          Update participant information
+                        </Label>
+                      </div>
+                      
+                      {showParticipantInfoFields && (
+                        <div className="space-y-3 mt-2 pl-6 border-l-2 border-muted">
+                          <div>
+                            <Label htmlFor="updated-email">Email</Label>
+                            <Input
+                              id="updated-email"
+                              placeholder="Updated email address" 
+                              value={updatedEmail}
+                              onChange={(e) => setUpdatedEmail(e.target.value)}
+                              type="email"
+                            />
+                          </div>
+                          
+                          <div>
+                            <Label htmlFor="updated-shirt-size">Shirt Size</Label>
+                            <Select value={updatedShirtSize} onValueChange={setUpdatedShirtSize}>
+                              <SelectTrigger id="updated-shirt-size" className="w-full">
+                                <SelectValue placeholder="Select shirt size" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {availableShirtSizes.map(size => (
+                                  <SelectItem key={size} value={size}>
+                                    {size}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          
+                          <div>
+                            <Label htmlFor="updated-category">Race Category</Label>
+                            <Select value={updatedCategory} onValueChange={setUpdatedCategory}>
+                              <SelectTrigger id="updated-category" className="w-full">
+                                <SelectValue placeholder="Select race category" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {availableCategories.map(category => (
+                                  <SelectItem key={category} value={category}>
+                                    {category}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
                         </div>
                       )}
                     </div>
