@@ -13,6 +13,8 @@ import { KitClaimData, useKitDistribution } from '@/hooks/useKitDistribution';
 import type { Registration } from '@/types/database';
 // Import dynamically to avoid SSR issues
 import { type Html5QrcodeScanner } from 'html5-qrcode';
+// Import custom styles for QR scanner
+import './KitScanner.css';
 // The actual import will be done dynamically in the component
 
 interface QRScannerProps {
@@ -131,17 +133,50 @@ export const KitDistributionScanner: React.FC<QRScannerProps> = ({ onComplete })
     setHasSubmitted(false);
     setCameraError(null);
     
-    // Ensure container exists
-    if (!qrContainerRef.current) return;
+    // Give a little time for the component to fully render and ensure the container reference is available
+    // This helps avoid the "QR container reference is not available" error
+    if (!qrContainerRef.current) {
+      console.log("Waiting for QR container to be available...");
+      
+      // Wait briefly for the DOM to update
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      // Check again after waiting
+      if (!qrContainerRef.current) {
+        console.error("QR container reference is not available even after waiting");
+        setCameraError("Could not initialize scanner. Please try again.");
+        setScanning(false);
+        return;
+      }
+    }
     
     // Clear any previous scanner instance
     if (qrScannerRef.current) {
       try {
         qrScannerRef.current.clear();
         qrScannerRef.current = null;
+        
+        // Reset the container element to ensure clean start
+        if (qrContainerRef.current) {
+          qrContainerRef.current.innerHTML = '';
+        }
       } catch (e) {
         console.error('Error cleaning up scanner:', e);
       }
+    }
+    
+    // Make sure the QR container is visible with consistent size
+    if (qrContainerRef.current) {
+      qrContainerRef.current.style.display = 'block';
+      qrContainerRef.current.style.maxWidth = '500px';
+      qrContainerRef.current.style.minHeight = '300px';
+      qrContainerRef.current.style.width = '100%';
+      qrContainerRef.current.style.position = 'relative';
+      qrContainerRef.current.style.margin = '0 auto';
+      qrContainerRef.current.style.border = '2px solid #e5e7eb';
+      qrContainerRef.current.style.borderRadius = '0.5rem';
+      qrContainerRef.current.style.overflow = 'hidden';
+      qrContainerRef.current.style.backgroundColor = '#f9fafb';
     }
     
     // Comprehensive camera permission check and handling
@@ -245,27 +280,49 @@ export const KitDistributionScanner: React.FC<QRScannerProps> = ({ onComplete })
         // We'll continue with scanner initialization and let it handle permissions
       }
       
-      const scanner = new Html5QrcodeScanner(
-        "qr-reader", 
-        { 
-          fps: 5, // Lower fps for better compatibility
-          qrbox: { width: 250, height: 250 },
-          rememberLastUsedCamera: true,
-          showTorchButtonIfSupported: true, // Show torch button for low light
-          aspectRatio: 1.0, // Use square aspect ratio for better compatibility
-          formatsToSupport: [0], // Only support QR codes for better performance
-          videoConstraints: {
-            // Explicitly set video constraints for better compatibility
-            width: { ideal: 1280 },
-            height: { ideal: 720 },
-            facingMode: "environment" // Use rear camera on mobile devices
-          }
-        },
-        /* verbose= */ false
-      );
-      
-      scanner.render(onQRCodeSuccess, onQRCodeError);
-      qrScannerRef.current = scanner;
+      try {
+        // Make absolutely sure the container exists before initializing
+        if (document.getElementById('qr-reader')) {
+          console.log("Creating QR scanner with container:", document.getElementById('qr-reader'));
+          
+          // Get container dimensions to make qrbox responsive
+          const containerElement = document.getElementById('qr-reader');
+          const containerWidth = containerElement ? containerElement.offsetWidth : 500;
+          const qrboxSize = Math.min(250, containerWidth - 50); // Make QR box responsive but not too large
+          
+          const scanner = new Html5QrcodeScanner(
+            "qr-reader", 
+            { 
+              fps: 10, // Increased for better responsiveness
+              qrbox: { width: qrboxSize, height: qrboxSize },
+              rememberLastUsedCamera: true,
+              showTorchButtonIfSupported: true, // Show torch button for low light
+              aspectRatio: 1.0, // Use square aspect ratio for better compatibility
+              formatsToSupport: [0], // Only support QR codes for better performance
+              disableFlip: false, // Allow image flip if needed
+              videoConstraints: {
+                // Explicitly set video constraints for better compatibility
+                width: { ideal: 1280 },
+                height: { ideal: 720 },
+                facingMode: "environment" // Use rear camera on mobile devices
+              }
+            },
+            /* verbose= */ true // Enable verbose mode for better debugging
+          );
+          
+          // Render the scanner and store the reference
+          scanner.render(onQRCodeSuccess, onQRCodeError);
+          qrScannerRef.current = scanner;
+          console.log("QR scanner initialized successfully");
+        } else {
+          throw new Error("QR container element not found in DOM");
+        }
+      } catch (initError) {
+        console.error("Error initializing QR scanner:", initError);
+        setCameraError(`Failed to initialize scanner: ${initError.message}`);
+        setScanning(false);
+        return;
+      }
       
       // Enhanced permission detection system
       // First quick check: Look for immediate permission dialog appearance (faster feedback)
@@ -489,8 +546,60 @@ export const KitDistributionScanner: React.FC<QRScannerProps> = ({ onComplete })
     setClaimerName('');
     setClaimNotes('');
     setHasSubmitted(false);
-    startScanner();
+    
+    // Reset the container element to ensure clean start with proper sizing
+    if (qrContainerRef.current) {
+      qrContainerRef.current.innerHTML = '';
+      // Ensure consistent styling on reset
+      qrContainerRef.current.style.maxWidth = '500px';
+      qrContainerRef.current.style.minHeight = '300px';
+      qrContainerRef.current.style.width = '100%';
+      qrContainerRef.current.style.position = 'relative';
+      qrContainerRef.current.style.margin = '0 auto';
+      qrContainerRef.current.style.border = '2px solid #e5e7eb';
+      qrContainerRef.current.style.borderRadius = '0.5rem';
+      qrContainerRef.current.style.overflow = 'hidden';
+      qrContainerRef.current.style.backgroundColor = '#f9fafb';
+    }
+    
+    // Start scanning with a slight delay to ensure DOM is ready
+    setTimeout(() => {
+      startScanner();
+    }, 100);
   };
+  
+  // Ensure QR container is ready when scanning starts
+  useEffect(() => {
+    if (scanning) {
+      console.log("Scanning mode activated, checking QR container ref:", qrContainerRef.current);
+      
+      // If container doesn't exist when scanning is activated, create a fallback
+      if (!qrContainerRef.current) {
+        console.warn("QR container ref not available when scanning started - checking DOM directly");
+        const existingContainer = document.getElementById('qr-reader');
+        if (!existingContainer) {
+          console.warn("Creating fallback QR container in DOM");
+          // Create a container if it doesn't exist in the DOM
+          const fallbackContainer = document.createElement('div');
+          fallbackContainer.id = 'qr-reader';
+          fallbackContainer.style.maxWidth = '500px';
+          fallbackContainer.style.minHeight = '300px';
+          fallbackContainer.style.position = 'relative';
+          fallbackContainer.style.margin = '0 auto';
+          fallbackContainer.style.border = '2px solid #e5e7eb';
+          fallbackContainer.style.borderRadius = '0.5rem';
+          fallbackContainer.style.backgroundColor = '#f9fafb';
+          
+          // Find a suitable parent element to attach it to
+          const contentArea = document.querySelector('.space-y-4');
+          if (contentArea) {
+            contentArea.prepend(fallbackContainer);
+            console.log("Fallback QR container created and inserted into DOM");
+          }
+        }
+      }
+    }
+  }, [scanning]);
   
   // Check if we're in a secure context (HTTPS)
   useEffect(() => {
@@ -527,6 +636,79 @@ export const KitDistributionScanner: React.FC<QRScannerProps> = ({ onComplete })
       checkForEmptyLabelsIssue();
     }
   }, [securityWarningDismissed]);
+  
+  // Monitor and fix QR scanner visibility when scanning state changes
+  useEffect(() => {
+    if (scanning) {
+      // Apply styles initially
+      const applyStyles = () => {
+        // Check if QR scanner elements are visible
+        const qrReader = document.getElementById('qr-reader');
+        if (qrReader) {
+          // Apply styling to the main container first
+          qrReader.style.maxWidth = '500px';
+          qrReader.style.minHeight = '300px';
+          qrReader.style.width = '100%';
+          qrReader.style.position = 'relative';
+          qrReader.style.margin = '0 auto';
+          qrReader.style.border = '2px solid #e5e7eb';
+          qrReader.style.borderRadius = '0.5rem';
+          qrReader.style.overflow = 'hidden';
+          qrReader.style.backgroundColor = '#f9fafb';
+          
+          const videoElement = qrReader.querySelector('video') as HTMLVideoElement | null;
+          const scanRegion = qrReader.querySelector('#qr-reader__scan_region') as HTMLElement | null;
+          const scannerContainer = qrReader.querySelector('#qr-reader__dashboard_section_csr') as HTMLElement | null;
+          
+          console.log("QR Reader DOM check:", {
+            qrReader: !!qrReader,
+            videoElement: !!videoElement,
+            scanRegion: !!scanRegion,
+            scannerContainer: !!scannerContainer
+          });
+          
+          // Apply additional styling to ensure visibility if elements exist but might be hidden
+          if (videoElement) {
+            videoElement.style.display = 'block';
+            videoElement.style.width = '100%';
+            videoElement.style.maxHeight = '300px';
+            videoElement.style.objectFit = 'cover';
+          }
+          
+          if (scanRegion) {
+            scanRegion.style.display = 'block';
+            scanRegion.style.position = 'relative';
+            scanRegion.style.minHeight = '250px';
+            scanRegion.style.width = '100%';
+          }
+          
+          if (scannerContainer) {
+            scannerContainer.style.width = '100%';
+            scannerContainer.style.maxWidth = '500px';
+            
+            // Find the scanner box and ensure it's visible
+            const scannerBox = scannerContainer.querySelector('div') as HTMLElement | null;
+            if (scannerBox) {
+              scannerBox.style.border = '3px solid #2563eb';
+              scannerBox.style.boxShadow = '0 0 0 4px rgba(37, 99, 235, 0.3)';
+            }
+          }
+        } else {
+          console.warn("QR reader element not found in the DOM");
+        }
+      };
+      
+      // Initial application of styles
+      setTimeout(applyStyles, 500);
+      
+      // Set up periodic style checking to ensure consistent appearance
+      const styleInterval = setInterval(applyStyles, 2000);
+      
+      return () => {
+        clearInterval(styleInterval);
+      };
+    }
+  }, [scanning]);
 
   const handleManualSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -558,6 +740,55 @@ export const KitDistributionScanner: React.FC<QRScannerProps> = ({ onComplete })
       setIsLoading(false);
     }
   };
+
+  // Add inline styles for scanner elements
+  useEffect(() => {
+    // Add a style tag to the head to ensure consistent styling of QR scanner elements
+    const styleTag = document.createElement('style');
+    styleTag.innerHTML = `
+      #qr-reader {
+        max-width: 500px !important;
+        min-height: 300px !important;
+        width: 100% !important;
+        position: relative !important;
+        margin: 0 auto !important;
+        border: 2px solid #e5e7eb !important;
+        border-radius: 0.5rem !important;
+        overflow: hidden !important;
+        background-color: #f9fafb !important;
+      }
+      
+      #qr-reader video {
+        display: block !important;
+        width: 100% !important;
+        max-height: 300px !important;
+        object-fit: cover !important;
+      }
+      
+      #qr-reader__scan_region {
+        display: block !important;
+        position: relative !important;
+        min-height: 250px !important;
+        width: 100% !important;
+      }
+      
+      #qr-reader__dashboard_section_csr {
+        width: 100% !important;
+        max-width: 500px !important;
+      }
+      
+      #qr-reader__dashboard_section_csr div {
+        border: 3px solid #2563eb !important;
+        box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.3) !important;
+      }
+    `;
+    document.head.appendChild(styleTag);
+    
+    return () => {
+      // Clean up style tag on component unmount
+      document.head.removeChild(styleTag);
+    };
+  }, []);
 
   return (
     <Card className="w-full max-w-3xl mx-auto">
@@ -733,7 +964,27 @@ export const KitDistributionScanner: React.FC<QRScannerProps> = ({ onComplete })
               </div>
             )}
             
-            <div ref={qrContainerRef} id="qr-reader" className="mx-auto" style={{ maxWidth: "500px" }}></div>
+            <div 
+              ref={qrContainerRef} 
+              id="qr-reader" 
+              className="qr-scanner-container mx-auto border-2 border-gray-200 rounded-md overflow-hidden"
+              style={{ 
+                maxWidth: "500px", 
+                minHeight: "300px", 
+                position: "relative",
+                display: "block", 
+                backgroundColor: "#f9fafb" 
+              }}
+            >
+              {/* Empty container that will be filled by the QR scanner */}
+              {/* The scanner library will inject elements here */}
+              <div className="flex justify-center items-center h-full" id="scanner-placeholder">
+                <div className="text-center text-gray-400">
+                  <QrCode className="h-12 w-12 mx-auto mb-2" />
+                  <p>Initializing camera...</p>
+                </div>
+              </div>
+            </div>
             
             {/* Special button for "empty labels" issue */}
             {scanning && !cameraError && (
