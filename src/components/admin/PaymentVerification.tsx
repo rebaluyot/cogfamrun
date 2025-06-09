@@ -282,7 +282,8 @@ export const PaymentVerification = () => {
       const paymentFieldsChanged = paymentMethodChanged || referenceChanged || notesChanged;
       
       let receiptNumber: string | undefined;
-      
+
+      console.warn(paymentFieldsChanged);
       if (paymentStatusChanged || paymentFieldsChanged) {
         // Use the utility function for updating payment status with history tracking
         const result = await updatePaymentStatus(

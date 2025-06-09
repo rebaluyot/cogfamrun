@@ -207,10 +207,12 @@ export const updatePaymentStatus = async (
     const previousStatus = registration.payment_status || "pending";
     
     // Only proceed if status is actually changing
+    /*
     if (previousStatus === newStatus && !notes) {
       return { success: true };
     }
-    
+    */
+   
     // Update registration
     const updates = {
       payment_status: newStatus,
