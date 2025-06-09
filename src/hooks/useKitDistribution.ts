@@ -7,7 +7,9 @@ export interface KitClaimData {
   id: string | number;
   kit_claimed: boolean;
   claimed_at?: string | null;
-  claimed_by?: string | null;
+  processed_by?: string | null; // The staff user who processed the claim
+  actual_claimer?: string | null; // Person who actually claimed the kit
+  claim_location_id?: number | null; // Location where the kit was claimed
   claim_notes?: string | null;
 }
 
@@ -69,19 +71,22 @@ export const useKitDistribution = () => {
     }
 
     // Create a properly typed Registration object with QR data
-    const result = {
-      ...(data as unknown as Registration),
-      amount_paid: data.price,
-      qrData: parsedData
+    // Use a type assertion to handle potentially missing fields
+    const anyData = data as any;
+    const result: Registration & { qrData: ReturnType<typeof parseQRCode> } = {
+      ...anyData,
+      amount_paid: anyData.price || 0,
+      qrData: parsedData,
+      // Add default values for kit claim fields to ensure they always exist
+      kit_claimed: anyData.kit_claimed === undefined ? false : anyData.kit_claimed,
+      claimed_at: anyData.claimed_at === undefined ? null : anyData.claimed_at,
+      processed_by: anyData.processed_by === undefined ? null : anyData.processed_by,
+      actual_claimer: anyData.actual_claimer === undefined ? null : anyData.actual_claimer,
+      claim_location_id: anyData.claim_location_id === undefined ? null : anyData.claim_location_id,
+      claim_notes: anyData.claim_notes === undefined ? null : anyData.claim_notes
     };
 
     console.warn(result);
-    
-    // Add kit claim fields if they don't exist
-    if (result.kit_claimed === undefined) result.kit_claimed = false;
-    if (result.claimed_at === undefined) result.claimed_at = null;
-    if (result.claimed_by === undefined) result.claimed_by = null;
-    if (result.claim_notes === undefined) result.claim_notes = null;
     
     return result;
   };
@@ -96,7 +101,9 @@ export const useKitDistribution = () => {
       const updateData = {
         kit_claimed: claimData.kit_claimed,
         claimed_at: claimData.claimed_at,
-        claimed_by: claimData.claimed_by,
+        processed_by: claimData.processed_by, // Staff who processed the claim
+        actual_claimer: claimData.actual_claimer, // Person who claimed the kit
+        claim_location_id: claimData.claim_location_id, // Location where claimed
         claim_notes: claimData.claim_notes
       };
       

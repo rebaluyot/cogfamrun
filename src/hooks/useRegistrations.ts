@@ -4,12 +4,15 @@ import { useDepartments } from './useDepartments';
 import { useMinistries } from './useMinistries';
 import { useClusters } from './useClusters';
 import { usePaymentMethods } from './usePaymentMethods';
+import { useClaimLocations } from './useClaimLocations';
 
 export const useRegistrations = () => {
   const { data: departments } = useDepartments();
   const { data: ministries } = useMinistries();
   const { data: clusters } = useClusters();
   const { data: paymentMethods } = usePaymentMethods();
+  const { locations: claimLocations } = useClaimLocations();
+
 
   return useQuery({
     queryKey: ['registrations'],
@@ -29,6 +32,7 @@ export const useRegistrations = () => {
       const ministryMap = new Map(ministries?.map(m => [m.id.toString(), m.name]) || []);
       const clusterMap = new Map(clusters?.map(c => [c.id.toString(), c.name]) || []);
       const paymentMethodMap = new Map(paymentMethods?.map(p => [p.id.toString(), p.name]) || []);
+      const claimLocationMap = new Map(claimLocations?.map(l => [l.id.toString(), l.name]) || []);
 
       // Transform registrations to show names instead of IDs
       const enhancedRegistrations = data?.map((registration: any) => {
@@ -41,14 +45,18 @@ export const useRegistrations = () => {
         // For cluster, just use what's in the database (which is currently just name)
         const clusterName = registration.cluster;
 
+        const claim_location_name = registration.claim_location_id ? claimLocationMap.get(registration.claim_location_id.toString()): undefined;
+
         // Get payment method name if available
         const paymentMethodName = registration.payment_method_id ? 
           paymentMethodMap.get(registration.payment_method_id.toString()) : undefined;
         
+
         return {
           ...registration,
           // Add payment method name for display
-          payment_method_name: paymentMethodName
+          payment_method_name: paymentMethodName,
+          claim_location_name: claim_location_name
         };
       });
       

@@ -10,7 +10,8 @@ import { useToast } from '@/hooks/use-toast';
 import { KitDistributionScanner } from '@/components/admin/KitDistributionScanner';
 import { useRegistrations } from '@/hooks/useRegistrations';
 import { useKitDistribution, KitClaimData } from '@/hooks/useKitDistribution';
-import { Loader2, Search, CheckCircle2, QrCode, FileTextIcon, XCircle, Edit, MoreHorizontal, AlertTriangle } from 'lucide-react';
+import { Loader2, Search, CheckCircle2, QrCode, FileTextIcon, XCircle, Edit, MoreHorizontal, AlertTriangle, Map, Settings } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 export const KitDistributionManagement: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -113,8 +114,18 @@ export const KitDistributionManagement: React.FC = () => {
       <div className="flex flex-col md:flex-row gap-4">
         <Card className="flex-1">
           <CardHeader className="pb-2">
-            <CardTitle className="text-xl">Kit Distribution Dashboard</CardTitle>
-            <CardDescription>Manage and track kit distribution status</CardDescription>
+            <div className="flex justify-between items-center">
+              <div>
+                <CardTitle className="text-xl">Kit Distribution Dashboard</CardTitle>
+                <CardDescription>Manage and track kit distribution status</CardDescription>
+              </div>
+              <Button asChild variant="outline" size="sm" className="flex items-center gap-1">
+                <Link to="/admin/claim-locations">
+                  <Map className="h-4 w-4" />
+                  <span>Manage Claim Locations</span>
+                </Link>
+              </Button>
+            </div>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -318,7 +329,15 @@ export const KitDistributionManagement: React.FC = () => {
                   <div className="space-y-2 text-sm">
                     <div className="flex">
                       <span className="font-medium w-24">Claimed By:</span>
-                      <span>{selectedParticipant.claimed_by || "Not specified"}</span>
+                      <span>{selectedParticipant.actual_claimer || "Not specified"}</span>
+                    </div>
+                    <div className="flex">
+                      <span className="font-medium w-24">Processed By:</span>
+                      <span>{selectedParticipant.processed_by || "Not specified"}</span>
+                    </div>
+                    <div className="flex">
+                      <span className="font-medium w-24">Location:</span>
+                      <span>{selectedParticipant.claim_location_name || "Not specified"}</span>
                     </div>
                     <div className="flex">
                       <span className="font-medium w-24">Claimed At:</span>
@@ -349,7 +368,9 @@ export const KitDistributionManagement: React.FC = () => {
                 onClick={() => handleSubmitClaim({
                   id: selectedParticipant.id,
                   kit_claimed: !selectedParticipant.kit_claimed,
-                  claimed_by: selectedParticipant.kit_claimed ? null : "Manual Update",
+                  processed_by: selectedParticipant.kit_claimed ? null : "Manual Update",
+                  actual_claimer: selectedParticipant.kit_claimed ? null : selectedParticipant.first_name + " " + selectedParticipant.last_name,
+                  claim_location_id: selectedParticipant.kit_claimed ? null : 1, // Default to first location
                   claimed_at: selectedParticipant.kit_claimed ? null : new Date().toISOString(),
                   claim_notes: selectedParticipant.kit_claimed 
                     ? `Manually unclaimed on ${new Date().toLocaleString()}` 

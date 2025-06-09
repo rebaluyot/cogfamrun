@@ -10,11 +10,24 @@ import { Separator } from "@/components/ui/separator";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
 import { useKitDistribution, KitClaimData } from "@/hooks/useKitDistribution";
+import { useClaimLocations } from "@/hooks/useClaimLocations";
 import { useAuth } from "@/contexts/AuthContext";
 import { formatCurrency, getCategoryColorClass } from "@/lib/format-utils";
-import { QrCode, Loader2, CheckCircle, User, Calendar, Package, Scan, AlertTriangle } from "lucide-react";
+import { 
+  QrCode, Loader2, CheckCircle, User, Calendar, Package, 
+  Scan, AlertTriangle, MapPin, UserCheck 
+} from "lucide-react";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { useQueryClient } from "@tanstack/react-query";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 // For camera scanning
 let scanner: any = null;
@@ -24,12 +37,15 @@ export const KitDistributionPage = () => {
   const [qrData, setQrData] = useState("");
   const [scanActive, setScanActive] = useState(false);
   const [claimNotes, setClaimNotes] = useState("");
+  const [actualClaimer, setActualClaimer] = useState("");
+  const [selectedLocationId, setSelectedLocationId] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [registration, setRegistration] = useState<any>(null);
   const { parseQRCode, lookupRegistration, updateKitClaimStatus } = useKitDistribution();
+  const { locations, isLoading: locationsLoading } = useClaimLocations();
   const { toast } = useToast();
-  const { isAuthenticated, hasPermission } = useAuth();
+  const { isAuthenticated, hasPermission, username } = useAuth();
   const queryClient = useQueryClient();
   
   // Clean up scanner on component unmount
@@ -207,8 +223,10 @@ export const KitDistributionPage = () => {
       // Set registration data
       setRegistration(registrationData);
       
-      // Clear claim notes for new registration
+      // Reset form values for new registration
       setClaimNotes("");
+      setActualClaimer(`${registrationData.first_name} ${registrationData.last_name}`); // Default to participant name
+      setSelectedLocationId(locations.length > 0 ? locations[0].id : null); // Default to first location
       
       toast({
         title: "Registration Found",
@@ -229,10 +247,32 @@ export const KitDistributionPage = () => {
   const handleKitClaim = async (claimed: boolean) => {
     if (!registration) return;
     
+    // Validate required fields
+    if (!actualClaimer.trim()) {
+      toast({
+        title: "Error",
+        description: "Please enter the name of the person claiming the kit",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    if (selectedLocationId === null) {
+      toast({
+        title: "Error",
+        description: "Please select a claim location",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     const claimData: KitClaimData = {
       id: registration.id,
       kit_claimed: claimed,
-      claimed_by: isAuthenticated ? "admin" : "staff",
+      processed_by: username || "unknown", // The staff member processing the claim
+      actual_claimer: actualClaimer.trim(), // The person who actually claimed the kit
+      claim_location_id: selectedLocationId, // The location where the kit was claimed
+      claimed_at: new Date().toISOString(), // Timestamp when the kit was claimed
       claim_notes: claimNotes.trim() || null,
     };
     
@@ -244,7 +284,11 @@ export const KitDistributionPage = () => {
         ...registration,
         kit_claimed: claimed,
         claimed_at: claimed ? new Date().toISOString() : null,
-        claimed_by: claimData.claimed_by,
+        processed_by: claimData.processed_by,
+        actual_claimer: claimData.actual_claimer,
+        claim_location_id: claimData.claim_location_id,
+        // Store the location name for display purposes
+        claim_location_name: locations.find(loc => loc.id === claimData.claim_location_id)?.name || 'Unknown location',
         claim_notes: claimData.claim_notes,
       });
       
@@ -497,65 +541,178 @@ export const KitDistributionPage = () => {
               
               <Separator />
               
-              <div className="space-y-1">
-                <Label htmlFor="claim-notes">Distribution Notes (Optional)</Label>
-                <Textarea 
-                  id="claim-notes"
-                  value={claimNotes}
-                  onChange={(e) => setClaimNotes(e.target.value)}
-                  placeholder="Add any notes about kit distribution"
-                  disabled={registration.kit_claimed}
-                />
-              </div>
+              {registration.status !== "confirmed" && (
+                <Alert variant="warning" className="mt-4">
+                  <AlertTriangle className="h-4 w-4" />
+                  <AlertTitle>Payment Not Confirmed</AlertTitle>
+                  <AlertDescription>
+                    This registration's payment has not been confirmed yet. Please verify payment status before distributing kit.
+                  </AlertDescription>
+                </Alert>
+              )}
+
+              {!registration.kit_claimed && (
+                <div className="space-y-4">
+                  {/* Actual claimer input */}
+                  <div className="space-y-1">
+                    <Label htmlFor="actual-claimer" className="font-medium">
+                      <UserCheck className="inline-block mr-1 h-4 w-4" /> 
+                      Person Claiming the Kit <span className="text-red-500">*</span>
+                    </Label>
+                    <Input
+                      id="actual-claimer" 
+                      value={actualClaimer}
+                      onChange={(e) => setActualClaimer(e.target.value)}
+                      placeholder="Enter the full name of person claiming the kit"
+                      className="w-full"
+                      disabled={registration.kit_claimed}
+                      required
+                    />
+                    <p className="text-xs text-muted-foreground">This could be the participant or someone else collecting on their behalf</p>
+                  </div>
+                  
+                  {/* Claim location selector */}
+                  <div className="space-y-1">
+                    <Label htmlFor="claim-location" className="font-medium">
+                      <MapPin className="inline-block mr-1 h-4 w-4" /> 
+                      Claim Location <span className="text-red-500">*</span>
+                    </Label>
+                    <Select 
+                      disabled={registration.kit_claimed || locationsLoading} 
+                      value={selectedLocationId?.toString() || undefined}
+                      onValueChange={(value) => setSelectedLocationId(parseInt(value, 10))}
+                    >
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Select a location" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectGroup>
+                          <SelectLabel>Available Locations</SelectLabel>
+                          {locations.map(location => (
+                            <SelectItem key={location.id} value={location.id.toString()}>
+                              {location.name}
+                            </SelectItem>
+                          ))}
+                        </SelectGroup>
+                      </SelectContent>
+                    </Select>
+                    {locationsLoading && <p className="text-xs text-muted-foreground">Loading locations...</p>}
+                  </div>
+                                    
+                  {/* Notes input */}
+                  <div className="space-y-1">
+                    <Label htmlFor="claim-notes">Distribution Notes (Optional)</Label>
+                    <Textarea 
+                      id="claim-notes"
+                      value={claimNotes}
+                      onChange={(e) => setClaimNotes(e.target.value)}
+                      placeholder="Add any notes about kit distribution"
+                      disabled={registration.kit_claimed}
+                    />
+                  </div>
+                </div>
+              )}
               
               {registration.kit_claimed && (
                 <div className="bg-green-100 border border-green-200 rounded-md p-4 flex items-start space-x-2">
                   <CheckCircle className="h-5 w-5 text-green-600 flex-shrink-0 mt-0.5" />
-                  <div className="space-y-1">
-                    <p className="font-medium text-green-800">Kit already claimed</p>
-                    <p className="text-sm text-green-700">
-                      Claimed on {new Date(registration.claimed_at).toLocaleString()} 
-                      {registration.claimed_by && ` by ${registration.claimed_by}`}
-                    </p>
+                  <div className="space-y-2 w-full">
+                    <div className="flex items-center justify-between">
+                      <p className="font-medium text-green-800 text-lg">Kit already claimed</p>
+                      <Badge variant="outline" className="bg-green-50 text-green-800 border-green-300">
+                        {new Date(registration.claimed_at).toLocaleDateString()}
+                      </Badge>
+                    </div>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2 pt-1">
+                      <div className="space-y-1">
+                        <p className="text-xs text-green-600 font-medium">CLAIMED BY</p>
+                        <p className="text-sm text-green-800 flex items-center">
+                          <UserCheck className="inline-block mr-1 h-4 w-4" />
+                          {registration.actual_claimer || 'Unknown person'}
+                        </p>
+                      </div>
+                      
+                      <div className="space-y-1">
+                        <p className="text-xs text-green-600 font-medium">CLAIMED AT</p>
+                        <p className="text-sm text-green-800 flex items-center">
+                          <MapPin className="inline-block mr-1 h-4 w-4" />
+                          {registration.claim_location_name || 'Unknown location'}
+                        </p>
+                      </div>
+                      
+                      <div className="space-y-1">
+                        <p className="text-xs text-green-600 font-medium">PROCESSED BY</p>
+                        <p className="text-sm text-green-800">
+                          {registration.processed_by || 'Unknown staff'}
+                        </p>
+                      </div>
+                      
+                      <div className="space-y-1">
+                        <p className="text-xs text-green-600 font-medium">CLAIMED TIME</p>
+                        <p className="text-sm text-green-800">
+                          {new Date(registration.claimed_at).toLocaleTimeString()}
+                        </p>
+                      </div>
+                    </div>
+                    
                     {registration.claim_notes && (
-                      <p className="text-sm text-green-700 italic">
-                        Note: {registration.claim_notes}
-                      </p>
+                      <div className="pt-1 border-t border-green-200 mt-2">
+                        <p className="text-xs text-green-600 font-medium">NOTES</p>
+                        <p className="text-sm text-green-800 italic">
+                          {registration.claim_notes}
+                        </p>
+                      </div>
                     )}
                   </div>
                 </div>
               )}
             </CardContent>
-            <CardFooter>
-              {!registration.kit_claimed ? (
-                <div className="flex flex-col sm:flex-row w-full gap-3">
-                  <Button
-                    onClick={() => setRegistration(null)}
-                    variant="outline"
-                    className="sm:flex-1"
-                  >
-                    Cancel
-                  </Button>
-                  <Button 
-                    onClick={() => handleKitClaim(true)}
-                    variant="default"
-                    className="sm:flex-1 bg-green-600 hover:bg-green-700"
-                    disabled={updateKitClaimStatus.isPending}
-                  >
-                    {updateKitClaimStatus.isPending ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Processing...
-                      </>
-                    ) : (
-                      <>
-                        <CheckCircle className="mr-2 h-4 w-4" />
-                        Mark Kit as Claimed
-                      </>
-                    )}
-                  </Button>
-                </div>
-              ) : (
+            <CardFooter className="flex flex-col gap-3">
+              {!registration.kit_claimed && (
+                <>
+                  {/* Validation warnings */}
+                  {(!actualClaimer.trim() || selectedLocationId === null) && (
+                    <div className="w-full rounded-md bg-yellow-50 px-3 py-2 text-sm text-yellow-800 border border-yellow-200">
+                      <p className="font-semibold">Required fields:</p>
+                      <ul className="list-disc pl-4 mt-1">
+                        {!actualClaimer.trim() && <li>Please enter the name of the person claiming the kit</li>}
+                        {selectedLocationId === null && <li>Please select a claim location</li>}
+                      </ul>
+                    </div>
+                  )}
+                
+                  <div className="flex flex-col sm:flex-row w-full gap-3">
+                    <Button
+                      onClick={() => setRegistration(null)}
+                      variant="outline"
+                      className="sm:flex-1"
+                    >
+                      Cancel
+                    </Button>
+                    <Button 
+                      onClick={() => handleKitClaim(true)}
+                      variant="default"
+                      className="sm:flex-1 bg-green-600 hover:bg-green-700"
+                      disabled={updateKitClaimStatus.isPending || !actualClaimer.trim() || selectedLocationId === null}
+                    >
+                      {updateKitClaimStatus.isPending ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Processing...
+                        </>
+                      ) : (
+                        <>
+                          <CheckCircle className="mr-2 h-4 w-4" />
+                          Mark Kit as Claimed
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                </>
+              )}
+              
+              {registration.kit_claimed && (
                 <Button
                   onClick={() => setRegistration(null)}
                   variant="outline"

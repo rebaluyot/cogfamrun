@@ -14,6 +14,7 @@ import Registration from "./pages/Registration";
 import Login from "./pages/Login";
 import NotFound from "./pages/NotFound";
 import KitDistribution from "./pages/KitDistribution";
+import ClaimLocationsAdmin from "./pages/admin/ClaimLocationsAdmin";
 import { Navigation } from "./components/Navigation";
 
 const queryClient = new QueryClient();
@@ -47,8 +48,13 @@ const App = () => {
                       <Admin />
                     </ProtectedRoute>
                   } />
+                  <Route path="/admin/claim-locations" element={
+                    <ProtectedRoute requiredPermission="isAdmin">
+                      <ClaimLocationsAdmin />
+                    </ProtectedRoute>
+                  } />
                   <Route path="/kit-distribution" element={
-                    <ProtectedRoute>
+                    <ProtectedRoute requiredPermission="canDistributeKits">
                       <KitDistribution />
                     </ProtectedRoute>
                   } />

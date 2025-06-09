@@ -11,6 +11,7 @@ interface UserRole {
 interface AuthContextType {
   isAuthenticated: boolean;
   userRole: UserRole | null;
+  username: string | null;
   login: (username: string, password: string) => Promise<boolean>;
   logout: () => void;
   loading: boolean;
@@ -30,6 +31,7 @@ export const useAuth = () => {
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [userRole, setUserRole] = useState<UserRole | null>(null);
+  const [username, setUsername] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
@@ -37,9 +39,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Check if user is already logged in
     const savedAuth = localStorage.getItem('adminAuthenticated');
     const savedRole = localStorage.getItem('userRole');
+    const savedUsername = localStorage.getItem('username');
     
     if (savedAuth === 'true') {
       setIsAuthenticated(true);
+      setUsername(savedUsername);
       
       if (savedRole) {
         try {
@@ -79,14 +83,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       setIsAuthenticated(true);
       setUserRole(role);
+      setUsername(username);
       
       // Save to localStorage
       localStorage.setItem('adminAuthenticated', 'true');
       localStorage.setItem('userRole', JSON.stringify(role));
+      localStorage.setItem('username', username);
       
       toast({
         title: "Login Successful",
-        description: `Welcome ${role.isAdmin ? 'admin' : 'user'}`,
+        description: `Welcome ${username}`,
       });
       return true;
     } catch (error) {
@@ -103,8 +109,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const logout = () => {
     setIsAuthenticated(false);
     setUserRole(null);
+    setUsername(null);
     localStorage.removeItem('adminAuthenticated');
     localStorage.removeItem('userRole');
+    localStorage.removeItem('username');
     toast({
       title: "Logged Out",
       description: "You have been logged out successfully",
@@ -121,6 +129,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     <AuthContext.Provider value={{ 
       isAuthenticated, 
       userRole, 
+      username,
       login, 
       logout, 
       loading, 

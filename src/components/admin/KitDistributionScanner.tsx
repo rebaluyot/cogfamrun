@@ -440,8 +440,11 @@ export const KitDistributionScanner: React.FC<QRScannerProps> = ({ onComplete })
       setRegistration(registrationData);
       
       // Pre-fill claimer name if kit was already claimed
-      if (registrationData.claimed_by) {
-        setClaimerName(registrationData.claimed_by);
+      if (registrationData.actual_claimer) {
+        setClaimerName(registrationData.actual_claimer);
+      } else if (registrationData.processed_by) {
+        // Fallback for legacy data
+        setClaimerName(registrationData.processed_by);
       }
       
       // Pre-fill claim notes if they exist
@@ -478,7 +481,9 @@ export const KitDistributionScanner: React.FC<QRScannerProps> = ({ onComplete })
       id: registration.id,
       kit_claimed: true,
       claimed_at: new Date().toISOString(),
-      claimed_by: claimerName,
+      processed_by: claimerName,
+      actual_claimer: claimerName,
+      claim_location_id: 1, // Default to first location
       claim_notes: claimNotes
     };
     
@@ -491,7 +496,9 @@ export const KitDistributionScanner: React.FC<QRScannerProps> = ({ onComplete })
         ...registration,
         kit_claimed: true,
         claimed_at: new Date().toISOString(),
-        claimed_by: claimerName,
+        processed_by: claimerName,
+        actual_claimer: claimerName,
+        claim_location_id: 1,
         claim_notes: claimNotes
       });
       
@@ -511,7 +518,9 @@ export const KitDistributionScanner: React.FC<QRScannerProps> = ({ onComplete })
       id: registration.id,
       kit_claimed: false,
       claimed_at: null,
-      claimed_by: null,
+      processed_by: null,
+      actual_claimer: null,
+      claim_location_id: null,
       claim_notes: `Unclaimed on ${new Date().toLocaleString()}. Previous notes: ${claimNotes || 'None'}`
     };
     
@@ -524,7 +533,9 @@ export const KitDistributionScanner: React.FC<QRScannerProps> = ({ onComplete })
         ...registration,
         kit_claimed: false,
         claimed_at: null,
-        claimed_by: null,
+        processed_by: null,
+        actual_claimer: null,
+        claim_location_id: null,
         claim_notes: claimData.claim_notes
       });
       
@@ -719,8 +730,8 @@ export const KitDistributionScanner: React.FC<QRScannerProps> = ({ onComplete })
       const registrationData = await lookupRegistration(manualQrValue);
       setRegistration(registrationData);
       
-      if (registrationData.claimed_by) {
-        setClaimerName(registrationData.claimed_by);
+      if (registrationData.processed_by) {
+        setClaimerName(registrationData.processed_by);
       }
       
       if (registrationData.claim_notes) {
@@ -1146,7 +1157,7 @@ export const KitDistributionScanner: React.FC<QRScannerProps> = ({ onComplete })
                   </AlertTitle>
                   <AlertDescription>
                     <p className="mt-1">
-                      Claimed by: <span className="font-medium">{registration.claimed_by || "Unknown"}</span>
+                      Processed by: <span className="font-medium">{registration.processed_by || "Unknown"}</span>
                     </p>
                     <p className="mt-1">
                       Claimed at: <span className="font-medium">{new Date(registration.claimed_at).toLocaleString()}</span>

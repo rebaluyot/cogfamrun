@@ -31,6 +31,8 @@ export interface Registration {
   disclaimer_accepted?: string;
   kit_claimed?: boolean;
   claimed_at?: string | null;
-  claimed_by?: string | null;
+  processed_by?: string | null;
+  actual_claimer?: string | null;
+  claim_location_id?: number | null;
   claim_notes?: string | null;
 }

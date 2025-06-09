@@ -28,7 +28,7 @@ async function testKitDistribution() {
     console.log('Checking schema...');
     const { data: columns, error: schemaError } = await supabase
       .from('registrations')
-      .select('kit_claimed, claimed_at, claimed_by, claim_notes')
+      .select('kit_claimed, claimed_at, processed_by, actual_claimer, claim_location_id, claim_notes')
       .limit(1);
     
     if (schemaError) {
@@ -71,7 +71,9 @@ async function testKitDistribution() {
       .update({
         kit_claimed: true,
         claimed_at: new Date().toISOString(),
-        claimed_by: 'TEST_SCRIPT',
+        processed_by: 'TEST_SCRIPT',
+        actual_claimer: 'TEST_CLAIMER',
+        claim_location_id: 1,
         claim_notes: `Test claim at ${new Date().toISOString()}`
       })
       .eq('id', testRegistration.id)
@@ -92,7 +94,9 @@ async function testKitDistribution() {
       .update({
         kit_claimed: false,
         claimed_at: null,
-        claimed_by: null,
+        processed_by: null,
+        actual_claimer: null,
+        claim_location_id: null,
         claim_notes: null
       })
       .eq('id', testRegistration.id);
