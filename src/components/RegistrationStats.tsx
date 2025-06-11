@@ -22,13 +22,13 @@ export const RegistrationStats = () => {
     { 
       name: "3K", 
       registered: stats?.threek || 0, 
-      capacity: 800, 
+      capacity: 2000, 
       color: "bg-green-500" 
     },
     { 
       name: "6K", 
       registered: stats?.sixk || 0, 
-      capacity: 600, 
+      capacity: 1500, 
       color: "bg-blue-500" 
     },
     { 

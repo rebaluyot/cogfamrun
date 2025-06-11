@@ -202,7 +202,7 @@ const Index = () => {
                 <CardTitle>Registration</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-lg font-medium">Until August 15, 2025</p>
+                <p className="text-lg font-medium">Until Juky 31, 2025</p>
                 <p className="text-muted-foreground">Limited slots available</p>
               </CardContent>
             </Card>
