@@ -6,9 +6,12 @@ import { useCategories } from "@/hooks/useCategories";
 import { formatCurrency, getCategoryColorClass, getCategoryDescription } from "@/lib/format-utils";
 import { cn } from "@/lib/utils";
 import { EventCountdown } from "@/components/EventCountdown";
+import { useAppSettings } from "@/config/app-settings";
+import { format } from "date-fns";
 
 const Index = () => {
   const { data: categories, isLoading } = useCategories();
+  const { settings } = useAppSettings();
 
   const races = categories ? categories.map((category) => ({
     distance: category.name,
@@ -26,14 +29,14 @@ const Index = () => {
               <div className="flex justify-center items-center mx-auto mb-8">
                 <div className="w-full max-w-[400px] aspect-rectangle relative">
                   <img 
-                    src="/assets/solid-fam-run-logo.png" 
-                    alt="SOLID FAM RUN 2025" 
+                    src={settings?.appLogoUrl || "/assets/solid-fam-run-logo.png"} 
+                    alt={settings?.appTitle || "SOLID FAM RUN 2025"} 
                     className="w-full h-full object-contain mix-blend-multiply"
                   />
                 </div>
               </div>
           <p className="text-xl md:text-2xl text-muted-foreground mb-12">
-            Join us on August 22, 2025 at 5:00 AM
+            Join us on {settings?.eventDate ? format(settings.eventDate, "MMMM d, yyyy 'at' h:mm a") : "August 22, 2025 at 5:00 AM"}
           </p>
           
           {/* Countdown Timer */}
@@ -184,8 +187,12 @@ const Index = () => {
                 <CardTitle>Date</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-lg font-medium">August 22, 2025</p>
-                <p className="text-muted-foreground">Starting at 5:00 AM</p>
+                <p className="text-lg font-medium">
+                  {settings?.eventDate ? format(settings.eventDate, "MMMM d, yyyy") : "August 22, 2025"}
+                </p>
+                <p className="text-muted-foreground">
+                  Starting at {settings?.eventDate ? format(settings.eventDate, "h:mm a") : "5:00 AM"}
+                </p>
               </CardContent>
             </Card>
             <Card>
@@ -202,7 +209,9 @@ const Index = () => {
                 <CardTitle>Registration</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-lg font-medium">Until Juky 31, 2025</p>
+                <p className="text-lg font-medium">
+                  Until {settings?.registrationDeadline ? format(settings.registrationDeadline, "MMMM d, yyyy") : "July 31, 2025"}
+                </p>
                 <p className="text-muted-foreground">Limited slots available</p>
               </CardContent>
             </Card>

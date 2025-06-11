@@ -1,0 +1,55 @@
+/* This CSS file applies custom theme colors from app settings */
+:root {
+  /* Default values for custom theme colors */
+  --primary-color: #2563eb;
+  --secondary-color: #f59e0b;
+  
+  /* Default values for tailwind theme variables - these match the default blue */
+  --primary: 221.2 83.2% 53.3%;
+  --secondary: 35.5 91.7% 52.0%;
+}
+
+/* Classes to override the default primary/secondary colors */
+.from-primary-custom {
+  --tw-gradient-from: var(--primary-color) var(--tw-gradient-from-position);
+  --tw-gradient-to: rgb(var(--primary-color) / 0) var(--tw-gradient-to-position);
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
+}
+
+.to-primary-custom {
+  --tw-gradient-to: var(--primary-color) var(--tw-gradient-to-position);
+}
+
+.bg-primary-custom {
+  background-color: var(--primary-color);
+}
+
+.text-primary-custom {
+  color: var(--primary-color);
+}
+
+.border-primary-custom {
+  border-color: var(--primary-color);
+}
+
+.from-secondary-custom {
+  --tw-gradient-from: var(--secondary-color) var(--tw-gradient-from-position);
+  --tw-gradient-to: rgb(var(--secondary-color) / 0) var(--tw-gradient-to-position);
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
+}
+
+.to-secondary-custom {
+  --tw-gradient-to: var(--secondary-color) var(--tw-gradient-to-position);
+}
+
+.bg-secondary-custom {
+  background-color: var(--secondary-color);
+}
+
+.text-secondary-custom {
+  color: var(--secondary-color);
+}
+
+.border-secondary-custom {
+  border-color: var(--secondary-color);
+}

@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Link } from "react-router-dom";
+import { Palette } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DepartmentManagement } from "@/components/admin/DepartmentManagement";
 import { MinistryManagement } from "@/components/admin/MinistryManagement";
@@ -12,6 +14,7 @@ import { PaymentMethodManagement } from "@/components/admin/PaymentMethodManagem
 import { PaymentVerification } from "@/components/admin/PaymentVerification";
 import { BatchPaymentVerification } from "@/components/admin/BatchPaymentVerification";
 import { EmailJSSettings } from "@/components/admin/EmailJSSettings";
+import { AppSettings } from "@/components/admin/AppSettings";
 import { KitDistributionManagement } from "@/components/admin/KitDistributionManagement";
 
 const Admin = () => {
@@ -107,12 +110,33 @@ const Admin = () => {
         
         <TabsContent value="settings">
           <Card>
-            <CardHeader>
-              <CardTitle>System Settings</CardTitle>
-              <CardDescription>Manage global configuration settings for the application</CardDescription>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <div>
+                <CardTitle>System Settings</CardTitle>
+                <CardDescription>Manage global configuration settings for the application</CardDescription>
+              </div>
+              <Button asChild variant="outline" size="sm">
+                <Link to="/admin/theme-test">
+                  <Palette className="mr-2 h-4 w-4" />
+                  Theme Test Page
+                </Link>
+              </Button>
             </CardHeader>
             <CardContent className="space-y-6">
-              <EmailJSSettings />
+              <Tabs defaultValue="app" className="w-full">
+                <TabsList className="grid w-full grid-cols-2 mb-4">
+                  <TabsTrigger value="app">App Settings</TabsTrigger>
+                  <TabsTrigger value="email">Email Settings</TabsTrigger>
+                </TabsList>
+                
+                <TabsContent value="app">
+                  <AppSettings />
+                </TabsContent>
+                
+                <TabsContent value="email">
+                  <EmailJSSettings />
+                </TabsContent>
+              </Tabs>
             </CardContent>
           </Card>
         </TabsContent>

@@ -43,7 +43,6 @@ export const setupStorage = async (): Promise<boolean> => {
       throw new Error('Bucket is not public');
     }
 
-    console.log('Storage bucket setup completed successfully');
     return true;
   } catch (error) {
     console.error('Error setting up storage:', error);

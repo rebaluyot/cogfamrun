@@ -26,11 +26,15 @@ export default {
 				foreground: 'hsl(var(--foreground))',
 				primary: {
 					DEFAULT: 'hsl(var(--primary))',
-					foreground: 'hsl(var(--primary-foreground))'
+					foreground: 'hsl(var(--primary-foreground))',
+					// Add a direct reference to the CSS variable
+					custom: 'var(--primary-color)'
 				},
 				secondary: {
 					DEFAULT: 'hsl(var(--secondary))',
-					foreground: 'hsl(var(--secondary-foreground))'
+					foreground: 'hsl(var(--secondary-foreground))',
+					// Add a direct reference to the CSS variable
+					custom: 'var(--secondary-color)'
 				},
 				destructive: {
 					DEFAULT: 'hsl(var(--destructive))',
