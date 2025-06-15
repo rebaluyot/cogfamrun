@@ -3,7 +3,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Download, Eye, Send, CheckCircle, XCircle, Search, Edit, MoreHorizontal, RefreshCcw } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Loader2, Download, Eye, Send, CheckCircle, XCircle, Search, Edit, MoreHorizontal, RefreshCcw, BarChart } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { formatCurrency, getCategoryColorClass, getStatusColorClass } from "@/lib/format-utils";
 import { useRegistrations } from "@/hooks/useRegistrations";
@@ -17,6 +18,7 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { ReportsVisualizations } from "@/components/admin/ReportsVisualizations";
 import * as XLSX from 'xlsx';
 import QRCodeNode from "qrcode";
 import { initializeEmailJS, sendEmailWithEmailJS } from "@/lib/emailjs-utils";
@@ -395,59 +397,75 @@ export const ReportsManagement = () => {
     <div className="space-y-6">
       <Card>
         <CardHeader>
-          <CardTitle>Generate Reports</CardTitle>
-          <CardDescription>Create Excel reports for registrations and analytics</CardDescription>
+          <CardTitle>Reports and Visualizations</CardTitle>
+          <CardDescription>Generate reports and visualize registration data</CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="text-sm font-medium">Report Type</label>
-              <Select value={selectedReport} onValueChange={setSelectedReport}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select report type" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all-registrations">All Registrations</SelectItem>
-                  <SelectItem value="church-members">Church Members Only</SelectItem>
-                  <SelectItem value="non-church">Non-Church Attendees</SelectItem>
-                  <SelectItem value="by-category">By Race Category</SelectItem>
-                  <SelectItem value="by-department">By Department</SelectItem>
-                  <SelectItem value="financial-summary">Financial Summary</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <label className="text-sm font-medium">Filter by Status</label>
-              <Select value={selectedStatus} onValueChange={setSelectedStatus}>
-                <SelectTrigger>
-                  <SelectValue placeholder="All statuses" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Statuses</SelectItem>
-                  <SelectItem value="confirmed">Confirmed Only</SelectItem>
-                  <SelectItem value="pending">Pending Only</SelectItem>
-                  <SelectItem value="cancelled">Cancelled Only</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-          <Button 
-            onClick={generateExcelReport} 
-            className="bg-green-600 hover:bg-green-700"
-            disabled={!selectedReport || isExporting}
-          >
-            {isExporting ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Exporting...
-              </>
-            ) : (
-              <>
-                <Download className="mr-2 h-4 w-4" />
-                Generate Excel Report
-              </>
-            )}
-          </Button>
+        <CardContent>
+          <Tabs defaultValue="tabular" className="space-y-4">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="tabular">Tabular Reports</TabsTrigger>
+              <TabsTrigger value="visual">
+                <BarChart className="h-4 w-4 mr-2" />
+                Visual Reports
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="tabular" className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-sm font-medium">Report Type</label>
+                  <Select value={selectedReport} onValueChange={setSelectedReport}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select report type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all-registrations">All Registrations</SelectItem>
+                      <SelectItem value="church-members">Church Members Only</SelectItem>
+                      <SelectItem value="non-church">Non-Church Attendees</SelectItem>
+                      <SelectItem value="by-category">By Race Category</SelectItem>
+                      <SelectItem value="by-department">By Department</SelectItem>
+                      <SelectItem value="financial-summary">Financial Summary</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <label className="text-sm font-medium">Filter by Status</label>
+                  <Select value={selectedStatus} onValueChange={setSelectedStatus}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="All statuses" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Statuses</SelectItem>
+                      <SelectItem value="confirmed">Confirmed Only</SelectItem>
+                      <SelectItem value="pending">Pending Only</SelectItem>
+                      <SelectItem value="cancelled">Cancelled Only</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <Button 
+                onClick={generateExcelReport} 
+                className="bg-green-600 hover:bg-green-700"
+                disabled={!selectedReport || isExporting}
+              >
+                {isExporting ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Exporting...
+                  </>
+                ) : (
+                  <>
+                    <Download className="mr-2 h-4 w-4" />
+                    Generate Excel Report
+                  </>
+                )}
+              </Button>
+            </TabsContent>
+            
+            <TabsContent value="visual">
+              <ReportsVisualizations />
+            </TabsContent>
+          </Tabs>
         </CardContent>
       </Card>
 
