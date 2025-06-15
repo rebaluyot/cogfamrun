@@ -355,12 +355,7 @@ const Registration = () => {
       const fileName = `${registrationId}_payment.${fileExt}`;
       const filePath = `${fileName}`; // Remove payment_proofs/ subfolder
 
-      console.log('Attempting to upload file:', {
-        fileName,
-        filePath,
-        fileType: file.type,
-        fileSize: file.size
-      });      // Check file size and type before upload
+      // Prepare to upload file      // Check file size and type before upload
       if (file.size > 5 * 1024 * 1024) {
         throw new Error('File size must be less than 5MB');
       }
@@ -404,7 +399,7 @@ const Registration = () => {
         throw signError;
       }
 
-      console.log('File uploaded successfully, signed URL:', signUrlData.signedUrl);
+      // File uploaded successfully
       return signUrlData.signedUrl;
     } catch (error) {
       console.error('Error uploading payment proof:', {

@@ -135,8 +135,6 @@ export const useKitDistribution = () => {
     }
   });
 
-  // Add debug log
-  console.log("useKitDistribution hook initialized");
   
   return {
     parseQRCode,

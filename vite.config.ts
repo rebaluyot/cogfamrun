@@ -27,6 +27,7 @@ import react from "@vitejs/plugin-react-swc";
 import path from "path";
 import fs from 'fs';
 
+// https://vitejs.dev/config/
 export default defineConfig({
   server: {
     https: {
@@ -41,6 +42,12 @@ export default defineConfig({
     alias: {
       "@": path.resolve(__dirname, "./src"),
     },
+  },
+  // Make sure environment variables are properly defined
+  define: {
+    // Ensure backward compatibility by exposing process.env 
+    // This is helpful during transition from process.env to import.meta.env
+    'process.env': {}
   },
 });
 

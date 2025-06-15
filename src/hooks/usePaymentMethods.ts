@@ -134,7 +134,6 @@ export const usePaymentMethodsAdmin = () => {
         
         if (error.message.includes('permission denied')) {
           // Workaround: Mark as inactive instead of deleting
-          console.log('Using workaround: marking as inactive instead of deleting');
           const { error: updateError } = await supabase
             .from('payment_methods')
             .update({ 

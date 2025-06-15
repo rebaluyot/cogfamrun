@@ -3,11 +3,13 @@ import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Menu, X, LogOut, LogIn } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { useAppSettings } from "@/config/app-settings";
 
 export const Navigation = () => {
   const [isOpen, setIsOpen] = useState(false);
   const location = useLocation();
   const { isAuthenticated, logout, hasPermission } = useAuth();
+  const { settings } = useAppSettings();
   
   // Filter navigation items based on user permissions
   const navItems = [
@@ -35,13 +37,13 @@ export const Navigation = () => {
             <Link to="/" className="flex items-center gap-6 hover:opacity-90 transition-opacity">
               <div className="relative h-12 w-12 overflow-hidden rounded-full border shadow-sm">
                 <img 
-                  src="/assets/solid-fam-run-logo.png" 
-                  alt="SOLID FAM RUN 2025" 
+                  src={settings?.appLogoUrl || "/assets/solid-fam-run-logo.png"} 
+                  alt={settings?.appTitle || "SOLID FAM RUN 2025"} 
                   className="h-full w-full object-cover"
                 />
               </div>
               <div className="hidden md:block">
-                <h1 className="font-bold text-xl leading-tight">COG Solid FamRun</h1>
+                <h1 className="font-bold text-xl leading-tight">{settings?.appTitle || "COG Solid FamRun"}</h1>
                 <p className="text-sm text-muted-foreground leading-tight">2025</p>
               </div>
             </Link>

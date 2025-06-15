@@ -106,7 +106,6 @@ export const KitDistributionPage = () => {
       try {
         const devices = await navigator.mediaDevices.enumerateDevices();
         const videoDevices = devices.filter(device => device.kind === 'videoinput');
-        console.log("Available camera devices:", videoDevices);
         
         if (videoDevices.length === 0) {
           setError("No camera detected on your device. Please use manual entry instead.");

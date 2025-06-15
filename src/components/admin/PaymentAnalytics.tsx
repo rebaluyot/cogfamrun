@@ -33,8 +33,6 @@ export const PaymentAnalytics = () => {
   const { data: paymentStats, isLoading, error: queryError, refetch } = useQuery({
     queryKey: ['payment-analytics'],
     queryFn: async () => {
-      console.log("Fetching payment analytics data...");
-      
       try {
         // Fetch all registrations
         const { data: registrations, error } = await supabase
@@ -42,22 +40,17 @@ export const PaymentAnalytics = () => {
           .select('*');
 
         if (error) {
-          console.error('Error fetching payment analytics data:', error);
           throw error;
         }
 
-      console.log(`Fetched ${registrations?.length || 0} registrations`);
+        // Fetch payment methods separately
+        const { data: paymentMethods, error: methodsError } = await supabase
+          .from('payment_methods')
+          .select('id, name');
 
-      // Fetch payment methods separately
-      const { data: paymentMethods, error: methodsError } = await supabase
-        .from('payment_methods')
-        .select('id, name');
-
-      if (methodsError) {
-        console.error('Error fetching payment methods:', methodsError);
-      } else {
-        console.log(`Fetched ${paymentMethods?.length || 0} payment methods`);
-      }
+        if (methodsError) {
+          throw methodsError;
+        }
 
       // Create a map for payment methods
       const methodsMap = new Map();
@@ -82,11 +75,9 @@ export const PaymentAnalytics = () => {
       };
 
       // Calculate stats from registrations
-      console.log("Processing registration data for analytics...");
       
       // Make sure registrations is an array before proceeding
       if (!registrations || !Array.isArray(registrations) || registrations.length === 0) {
-        console.log("No registrations found for analytics, or data is not in expected format");
         return stats; // Return empty stats object
       }
       
@@ -116,10 +107,7 @@ export const PaymentAnalytics = () => {
         // Increment the total for this date
         stats.registrationsByDate[registrationDate].total += 1;
         
-        // Debug payment method info for first few registrations
-        if (registrations.indexOf(registration) < 3) {
-          console.log(`Registration ${registration.registration_id}: method_id=${methodId}, status=${paymentStatus}, price=${price}`);
-        }
+        // Process each registration
 
         // Update counts based on payment status
         if (paymentStatus === 'confirmed') {
@@ -173,14 +161,7 @@ export const PaymentAnalytics = () => {
         stats.paymentByMethod['unknown'] = { count: registrations.length, total: stats.totalRevenue, name: 'Not specified' };
       }
       
-      console.log("Analytics summary:", {
-        totalRevenue: stats.totalRevenue,
-        confirmedPayments: stats.confirmedPayments,
-        pendingPayments: stats.pendingPayments,
-        rejectedPayments: stats.rejectedPayments,
-        paymentMethodCount: Object.keys(stats.paymentByMethod).length,
-        categoryCount: Object.keys(stats.revenueByCategory).length
-      });
+      // Analytics processing complete
 
       return stats;
       } catch (err) {

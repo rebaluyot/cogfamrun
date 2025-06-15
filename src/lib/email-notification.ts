@@ -79,13 +79,8 @@ export const sendPaymentStatusEmail = async (
       return { success: false, message: 'Invalid status' };
     }
 
-    // In a real implementation, this would use a proper email service
-    // For this implementation, we'll use a placeholder function
-    // that simulates sending an email and logs the information
-    
-    console.log(`Sending ${status} email to ${email}`);
-    console.log(`Subject: ${template.subject}`);
-    console.log(`Body: ${template.body(firstName, registrationId, notes)}`);
+    // In a real implementation, this would use EmailJS to send emails
+    // This functionality can be improved by retrieving settings from system_settings table
     
     // Record this email in the database for tracking
     const { error } = await supabase
