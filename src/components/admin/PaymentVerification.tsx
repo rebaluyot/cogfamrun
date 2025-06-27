@@ -92,6 +92,10 @@ export const PaymentVerification = () => {
   const [updatedEmail, setUpdatedEmail] = useState<string>("");
   const [updatedShirtSize, setUpdatedShirtSize] = useState<string>("");
   const [updatedCategory, setUpdatedCategory] = useState<string>("");
+  const [updatedIsChurchAttendee, setUpdatedIsChurchAttendee] = useState<boolean>(false);
+  const [updatedDepartment, setUpdatedDepartment] = useState<string>("");
+  const [updatedMinistry, setUpdatedMinistry] = useState<string>("");
+  const [updatedCluster, setUpdatedCluster] = useState<string>("");
   const [availableCategories, setAvailableCategories] = useState<string[]>([
     "3K", "6K", "10K"
   ]);
@@ -165,6 +169,84 @@ export const PaymentVerification = () => {
     },
   });
 
+  // Fetch departments for dropdown
+  const { data: departments } = useQuery({
+    queryKey: ['departments'],
+    queryFn: async () => {
+      const response = await (supabase as any)
+        .from('departments')
+        .select('id, name')
+        .order('name');
+
+      if (response.error) {
+        console.error('Error fetching departments:', response.error);
+        return [];
+      }
+
+      // Remove duplicates based on name to prevent duplicate SelectItems
+      const uniqueDepartments = response.data.reduce((acc: Array<{id: number, name: string}>, dept: {id: number, name: string}) => {
+        if (!acc.find(d => d.name === dept.name)) {
+          acc.push(dept);
+        }
+        return acc;
+      }, []);
+
+      return uniqueDepartments as Array<{id: number, name: string}>;
+    },
+  });
+
+  // Fetch ministries for dropdown
+  const { data: ministries } = useQuery({
+    queryKey: ['ministries'],
+    queryFn: async () => {
+      const response = await (supabase as any)
+        .from('ministries')
+        .select('id, name, department_id')
+        .order('name');
+
+      if (response.error) {
+        console.error('Error fetching ministries:', response.error);
+        return [];
+      }
+
+      // Remove duplicates based on name to prevent duplicate SelectItems
+      const uniqueMinistries = response.data.reduce((acc: Array<{id: number, name: string, department_id: number}>, ministry: {id: number, name: string, department_id: number}) => {
+        if (!acc.find(m => m.name === ministry.name)) {
+          acc.push(ministry);
+        }
+        return acc;
+      }, []);
+
+      return uniqueMinistries as Array<{id: number, name: string, department_id: number}>;
+    },
+  });
+
+  // Fetch clusters for dropdown
+  const { data: clusters } = useQuery({
+    queryKey: ['clusters'],
+    queryFn: async () => {
+      const response = await (supabase as any)
+        .from('clusters')
+        .select('id, name')
+        .order('name');
+
+      if (response.error) {
+        console.error('Error fetching clusters:', response.error);
+        return [];
+      }
+
+      // Remove duplicates based on name to prevent duplicate SelectItems
+      const uniqueClusters = response.data.reduce((acc: Array<{id: number, name: string}>, cluster: {id: number, name: string}) => {
+        if (!acc.find(c => c.name === cluster.name)) {
+          acc.push(cluster);
+        }
+        return acc;
+      }, []);
+
+      return uniqueClusters as Array<{id: number, name: string}>;
+    },
+  });
+
   const filteredRegistrations = registrations?.filter(reg => {
     // Apply tab filter
     if (activeTab === "pending" && reg.payment_status !== "pending") return false;
@@ -202,6 +284,10 @@ export const PaymentVerification = () => {
     setUpdatedEmail(registration.email || "");
     setUpdatedShirtSize(registration.shirt_size || "");
     setUpdatedCategory(registration.category || "");
+    setUpdatedIsChurchAttendee(registration.is_church_attendee || false);
+    setUpdatedDepartment(registration.department || "no_department");
+    setUpdatedMinistry(registration.ministry || "no_ministry");
+    setUpdatedCluster(registration.cluster || "no_cluster");
     
     setIsDialogOpen(true);
   };
@@ -256,6 +342,46 @@ export const PaymentVerification = () => {
           updatedRegistration.category = updatedCategory;
           participantUpdateFields.category = updatedCategory;
           participantInfoChanged = true;
+        }
+        
+        // Check and apply church attendee status update
+        if (updatedIsChurchAttendee !== undefined && updatedIsChurchAttendee !== selectedRegistration.is_church_attendee) {
+          updatedRegistration.is_church_attendee = updatedIsChurchAttendee;
+          participantUpdateFields.is_church_attendee = updatedIsChurchAttendee;
+          participantInfoChanged = true;
+        }
+        
+        // Check and apply department update
+        if (updatedDepartment !== undefined) {
+          const deptValue = updatedDepartment === "no_department" ? null : updatedDepartment;
+          const currentDeptValue = selectedRegistration.department || null;
+          if (deptValue !== currentDeptValue) {
+            updatedRegistration.department = deptValue;
+            participantUpdateFields.department = deptValue;
+            participantInfoChanged = true;
+          }
+        }
+        
+        // Check and apply ministry update
+        if (updatedMinistry !== undefined) {
+          const ministryValue = updatedMinistry === "no_ministry" ? null : updatedMinistry;
+          const currentMinistryValue = selectedRegistration.ministry || null;
+          if (ministryValue !== currentMinistryValue) {
+            updatedRegistration.ministry = ministryValue;
+            participantUpdateFields.ministry = ministryValue;
+            participantInfoChanged = true;
+          }
+        }
+        
+        // Check and apply cluster update
+        if (updatedCluster !== undefined) {
+          const clusterValue = updatedCluster === "no_cluster" ? null : updatedCluster;
+          const currentClusterValue = selectedRegistration.cluster || null;
+          if (clusterValue !== currentClusterValue) {
+            updatedRegistration.cluster = clusterValue;
+            participantUpdateFields.cluster = clusterValue;
+            participantInfoChanged = true;
+          }
         }
         
         // If participant info changed but payment status didn't, update the registration directly
@@ -355,6 +481,30 @@ export const PaymentVerification = () => {
         if (updatedCategory && updatedCategory !== selectedRegistration.category) {
           updatedFields.push("race category");
         }
+        if (updatedIsChurchAttendee !== selectedRegistration.is_church_attendee) {
+          updatedFields.push("church attendee status");
+        }
+        if (updatedDepartment !== undefined) {
+          const deptValue = updatedDepartment === "no_department" ? null : updatedDepartment;
+          const currentDeptValue = selectedRegistration.department || null;
+          if (deptValue !== currentDeptValue) {
+            updatedFields.push("department");
+          }
+        }
+        if (updatedMinistry !== undefined) {
+          const ministryValue = updatedMinistry === "no_ministry" ? null : updatedMinistry;
+          const currentMinistryValue = selectedRegistration.ministry || null;
+          if (ministryValue !== currentMinistryValue) {
+            updatedFields.push("ministry");
+          }
+        }
+        if (updatedCluster !== undefined) {
+          const clusterValue = updatedCluster === "no_cluster" ? null : updatedCluster;
+          const currentClusterValue = selectedRegistration.cluster || null;
+          if (clusterValue !== currentClusterValue) {
+            updatedFields.push("cluster");
+          }
+        }
         
         baseMessage += ` Participant ${updatedFields.join(", ")} updated.`;
       }
@@ -415,7 +565,12 @@ export const PaymentVerification = () => {
                       onChange={(e) => setSearchTerm(e.target.value)}
                     />
                   </div>
-                  <Button variant="outline" size="sm" onClick={() => refetch()}>
+                  <Button variant="outline" size="sm" onClick={() => {
+                    refetch();
+                    queryClient.invalidateQueries({ queryKey: ['departments'] });
+                    queryClient.invalidateQueries({ queryKey: ['ministries'] });
+                    queryClient.invalidateQueries({ queryKey: ['clusters'] });
+                  }}>
                     <RefreshCw className="h-4 w-4 mr-1" />
                     Refresh
                   </Button>
@@ -692,6 +847,74 @@ export const PaymentVerification = () => {
                               </SelectContent>
                             </Select>
                           </div>
+
+                          <div className="space-y-2">
+                            <div className="flex items-center space-x-2">
+                              <Checkbox 
+                                id="updated-church-attendee"
+                                checked={updatedIsChurchAttendee}
+                                onCheckedChange={(checked) => setUpdatedIsChurchAttendee(checked === true)}
+                              />
+                              <Label htmlFor="updated-church-attendee" className="text-sm cursor-pointer">
+                                Church Attendee
+                              </Label>
+                            </div>
+                          </div>
+
+                          {updatedIsChurchAttendee && (
+                            <>
+                              <div>
+                                <Label htmlFor="updated-department">Department</Label>
+                                <Select value={updatedDepartment} onValueChange={setUpdatedDepartment}>
+                                  <SelectTrigger id="updated-department" className="w-full">
+                                    <SelectValue placeholder="Select department" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="no_department">No Department</SelectItem>
+                                    {departments?.map((dept, index) => (
+                                      <SelectItem key={`dept-${dept.id}-${index}`} value={dept.name}>
+                                        {dept.name}
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                              </div>
+
+                              <div>
+                                <Label htmlFor="updated-ministry">Ministry</Label>
+                                <Select value={updatedMinistry} onValueChange={setUpdatedMinistry}>
+                                  <SelectTrigger id="updated-ministry" className="w-full">
+                                    <SelectValue placeholder="Select ministry" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="no_ministry">No Ministry</SelectItem>
+                                    {ministries?.map((ministry, index) => (
+                                      <SelectItem key={`ministry-${ministry.id}-${index}`} value={ministry.name}>
+                                        {ministry.name}
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                              </div>
+
+                              <div>
+                                <Label htmlFor="updated-cluster">Cluster</Label>
+                                <Select value={updatedCluster} onValueChange={setUpdatedCluster}>
+                                  <SelectTrigger id="updated-cluster" className="w-full">
+                                    <SelectValue placeholder="Select cluster" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="no_cluster">No Cluster</SelectItem>
+                                    {clusters?.map((cluster, index) => (
+                                      <SelectItem key={`cluster-${cluster.id}-${index}`} value={cluster.name}>
+                                        {cluster.name}
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                            </>
+                          )}
                         </div>
                       )}
                     </div>
