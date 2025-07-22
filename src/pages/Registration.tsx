@@ -1173,11 +1173,11 @@ const Registration = () => {
                   </div>
                 </div>
 
-                {/* Freebies Information */}
+                {/* Freebies Information Regular */}
                 <div className="p-3 sm:p-4 bg-gradient-to-br from-blue-50 to-white rounded-lg border border-blue-200">
                   <h3 className="text-base sm:text-lg font-semibold text-blue-700 mb-3 sm:mb-4 flex items-center gap-2">
                     <span className="bg-blue-700 text-white w-5 h-5 sm:w-6 sm:h-6 rounded-full flex items-center justify-center text-xs sm:text-sm">✓</span>
-                    Race Kit Inclusions
+                    Race Kit Inclusions (Regular Runner - 1000)
                   </h3>
                   <div className="grid grid-cols-2 gap-2 sm:gap-4 text-sm sm:text-base">
                     <div className="space-y-1 sm:space-y-2">
@@ -1206,7 +1206,31 @@ const Registration = () => {
                     </div>
                   </div>
                 </div>
-
+                {/* Freebies Information */}
+                <div className="p-3 sm:p-4 bg-gradient-to-br from-blue-50 to-white rounded-lg border border-blue-200">
+                  <h3 className="text-base sm:text-lg font-semibold text-blue-700 mb-3 sm:mb-4 flex items-center gap-2">
+                    <span className="bg-blue-700 text-white w-5 h-5 sm:w-6 sm:h-6 rounded-full flex items-center justify-center text-xs sm:text-sm">✓</span>
+                    Race Kit Inclusions - Support (500)
+                  </h3>
+                  <div className="grid grid-cols-2 gap-2 sm:gap-4 text-sm sm:text-base">
+                    <div className="space-y-1 sm:space-y-2">
+                      <div className="flex items-center gap-2">
+                        <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-blue-600 rounded-full"></div>
+                        <span>Event Singlet</span>
+                      </div>
+                    </div>
+                    <div className="space-y-1 sm:space-y-2">
+                      <div className="flex items-center gap-2">
+                        <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-blue-600 rounded-full"></div>
+                        <span>Runner Bag</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-blue-600 rounded-full"></div>
+                        <span>Bib with RFID</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
                 {/* Payment Section */}
                 <div id="payment-section" className="space-y-3 sm:space-y-4 mt-4 sm:mt-6">
                   <h3 className="text-base sm:text-lg font-semibold">

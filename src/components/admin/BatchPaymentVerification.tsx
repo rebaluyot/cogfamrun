@@ -72,11 +72,11 @@ export const BatchPaymentVerification = () => {
   const { data: registrations, isLoading, refetch } = useQuery({
     queryKey: ['pending-payments'],
     queryFn: async () => {
-      // First fetch registrations with pending payment status
+      // First fetch registrations with any pending payment status
       const { data: registrationsData, error: registrationsError } = await supabase
         .from('registrations')
         .select('*')
-        .eq('payment_status', 'pending')
+        .in('payment_status', ['pending', 'pending-kp', 'pending-soa', 'pre-registered'])
         .order('created_at', { ascending: false });
 
       if (registrationsError) {
@@ -594,8 +594,12 @@ export const BatchPaymentVerification = () => {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="confirmed">Confirmed</SelectItem>
-                  <SelectItem value="rejected">Rejected</SelectItem>
                   <SelectItem value="pending">Pending</SelectItem>
+                  <SelectItem value="pending-kp">Pending - KP</SelectItem>
+                  <SelectItem value="pending-soa">Pending - SOA</SelectItem>
+                  <SelectItem value="pre-registered">Pre Registered</SelectItem>
+                  <SelectItem value="cancelled">Cancelled</SelectItem>
+                  <SelectItem value="rejected">Rejected</SelectItem>
                 </SelectContent>
               </Select>
             </div>

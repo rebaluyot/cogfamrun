@@ -438,6 +438,9 @@ export const ReportsManagement = () => {
                       <SelectItem value="all">All Statuses</SelectItem>
                       <SelectItem value="confirmed">Confirmed Only</SelectItem>
                       <SelectItem value="pending">Pending Only</SelectItem>
+                      <SelectItem value="pending-kp">Pending - KP Only</SelectItem>
+                      <SelectItem value="pending-soa">Pending - SOA Only</SelectItem>
+                      <SelectItem value="pre-registered">Pre Registered Only</SelectItem>
                       <SelectItem value="cancelled">Cancelled Only</SelectItem>
                     </SelectContent>
                   </Select>
@@ -533,9 +536,11 @@ export const ReportsManagement = () => {
               </div>
               <div className="text-center">
                 <div className="text-2xl font-bold text-yellow-600">
-                  {filteredRegistrations.filter(r => r.status.toLowerCase() === "pending").length}
+                  {filteredRegistrations.filter(r => 
+                    ["pending", "pending-kp", "pending-soa", "pre-registered"].includes(r.status.toLowerCase())
+                  ).length}
                 </div>
-                <div className="text-sm text-gray-600">Pending</div>
+                <div className="text-sm text-gray-600">Total Pending</div>
               </div>
               <div className="text-center">
                 <div className="text-2xl font-bold text-purple-600">
@@ -673,6 +678,9 @@ export const ReportsManagement = () => {
                 <SelectContent>
                   <SelectItem value="confirmed">Confirmed</SelectItem>
                   <SelectItem value="pending">Pending</SelectItem>
+                  <SelectItem value="pending-kp">Pending - KP</SelectItem>
+                  <SelectItem value="pending-soa">Pending - SOA</SelectItem>
+                  <SelectItem value="pre-registered">Pre Registered</SelectItem>                  
                   <SelectItem value="cancelled">Cancelled</SelectItem>
                 </SelectContent>
               </Select>
@@ -709,6 +717,9 @@ export const ReportsManagement = () => {
                 <SelectContent>
                   <SelectItem value="confirmed">Confirmed</SelectItem>
                   <SelectItem value="pending">Pending</SelectItem>
+                  <SelectItem value="pending-kp">Pending - KP</SelectItem>
+                  <SelectItem value="pending-soa">Pending - SOA</SelectItem>
+                  <SelectItem value="pre-registered">Pre Registered</SelectItem>
                   <SelectItem value="cancelled">Cancelled</SelectItem>
                 </SelectContent>
               </Select>
